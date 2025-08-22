@@ -3,13 +3,13 @@
 #![feature(coroutines, coroutine_trait)]
 
 use bevy::prelude::*;
-use bevy_coroutine_system::{coroutine_system, sleep, plugin, CoroutineSystem};
+use bevy_coroutine_system::prelude::*;
 use std::time::Duration;
 
 fn main() {
     let mut app = App::new();
     
-    app.add_plugins((MinimalPlugins, plugin));
+    app.add_plugins((MinimalPlugins, CoroutinePlugin));
 
     let id = app.register_coroutine(minimal_system, minimal_system::id());
     

@@ -3,14 +3,14 @@
 #![feature(coroutines, coroutine_trait)]
 
 use bevy::prelude::*;
-use bevy_coroutine_system::{coroutine_system, next_frame, plugin, sleep, CoroutineSystem};
+use bevy_coroutine_system::prelude::*;
 use std::time::Duration;
 
 fn main() {
     // 创建一个简单的Bevy应用
     let mut app = App::new();
 
-    app.add_plugins((DefaultPlugins, plugin));
+    app.add_plugins((DefaultPlugins, CoroutinePlugin));
 
     app.world_mut()
         .spawn((Transform::from_xyz(0.0, 0.0, 0.0), Hp(100), Player));

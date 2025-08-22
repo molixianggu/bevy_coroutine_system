@@ -53,7 +53,7 @@ Add the following at the top of your crate root file (`main.rs` or `lib.rs`):
 #![feature(coroutines, coroutine_trait)]
 
 use bevy::prelude::*;
-use bevy_coroutine_system::{coroutine_system, sleep, plugin, CoroutineSystem};
+use bevy_coroutine_system::prelude::*;
 use std::time::Duration;
 
 #[coroutine_system]
@@ -78,7 +78,7 @@ fn my_coroutine_system(
 fn main() {
     let mut app = App::new();
     
-    app.add_plugins((DefaultPlugins, plugin));
+    app.add_plugins((DefaultPlugins, CoroutinePlugin));
     
     // Register the coroutine system
     app.register_coroutine(my_coroutine_system, my_coroutine_system::id());
@@ -148,14 +148,14 @@ struct MyCoroutineSystemParams<'w, 's> {
 // Actual system function
 fn my_coroutine_system<'w, 's>(
     params: MyCoroutineSystemParams<'w, 's>,
-    mut task: Local<Task<TaskInput<MyCoroutineSystemParams<'static, 'static>>>>,
-    mut running_task: ResMut<RunningTask>,
+    mut task: Local<CoroutineTask<CoroutineTaskInput<MyCoroutineSystemParams<'static, 'static>>>>,
+    mut running_task: ResMut<RunningCoroutines>,
 ) {
     // Create coroutine on first run
     if task.coroutine.is_none() {
         task.coroutine = Some(Box::pin(
             #[coroutine]
-            move |mut input: TaskInput<MyCoroutineSystemParams<'static, 'static>>| {
+            move |mut input: CoroutineTaskInput<MyCoroutineSystemParams<'static, 'static>>| {
                 // Get raw pointer to parameters
                 let params = input.data_mut();
                 let query = &mut params.query;
@@ -197,7 +197,7 @@ fn my_coroutine_system<'w, 's>(
     }
     
     // Create coroutine input with parameter pointer and async result
-    let input = TaskInput {
+    let input = CoroutineTaskInput {
         data_ptr: Some(unsafe { NonNull::new_unchecked(&params as *const _ as *mut _) }),
         async_result,
     };
@@ -231,9 +231,9 @@ pub mod my_coroutine_system {
 ### 🔑 Key Mechanisms
 
 1. **🔐 Lifetime Handling**: Uses raw pointers (`NonNull`) to pass parameters, bypassing Rust's lifetime checks
-2. **📦 Coroutine State**: Saves coroutine state via `Local<Task>` for cross-frame persistence
+2. **📦 Coroutine State**: Saves coroutine state via `Local<CoroutineTask>` for cross-frame persistence
 3. **⚡ Async Support**: Yielded Futures are polled each frame until completion
-4. **🔄 Auto Registration**: `RunningTask` resource tracks all active coroutines, ensuring they execute each frame
+4. **🔄 Auto Registration**: `RunningCoroutines` resource tracks all active coroutines, ensuring they execute each frame
 
 ## 📚 Examples
 

@@ -15,7 +15,7 @@
 //! #![feature(coroutines, coroutine_trait)]
 //! 
 //! use bevy::prelude::*;
-//! use bevy_coroutine_system::{coroutine_system, sleep, plugin, CoroutineSystem};
+//! use bevy_coroutine_system::prelude::*;
 //! use std::time::Duration;
 //!
 //! #[coroutine_system]
@@ -53,8 +53,21 @@ use std::future::Future;
 pub use bevy_coroutine_system_macro::*;
 
 
-pub fn plugin(app: &mut App) {
-    app.init_resource::<RunningTask>().add_systems(Update, update_running_tasks);
+/// Bevy 协程系统插件
+/// 
+/// 添加此插件以启用协程系统功能
+/// 
+/// # Example
+/// ```rust,ignore
+/// app.add_plugins(CoroutinePlugin);
+/// ```
+pub struct CoroutinePlugin;
+
+impl Plugin for CoroutinePlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<RunningCoroutines>()
+            .add_systems(Update, update_running_tasks);
+    }
 }
 
 
@@ -73,14 +86,14 @@ pub trait CoroutineSystem {
 impl CoroutineSystem for App {
     fn register_coroutine<M>(&mut self, system: impl IntoSystem<(), (), M> + 'static, system_id: &'static str) -> SystemId {
         let id = self.world_mut().register_system_cached(system);
-        self.world_mut().resource_mut::<RunningTask>().register_systems.insert(system_id, id);
+        self.world_mut().resource_mut::<RunningCoroutines>().register_systems.insert(system_id, id);
         id
     }
 }
 
 
 /// 协程任务的容器
-pub struct Task<R> {
+pub struct CoroutineTask<R> {
     /// 协程实例
     pub coroutine: Option<
         Pin<
@@ -99,7 +112,7 @@ pub struct Task<R> {
     pub init: bool,
 }
 
-impl<R> Default for Task<R> {
+impl<R> Default for CoroutineTask<R> {
     fn default() -> Self {
         Self {
             coroutine: None,
@@ -110,7 +123,7 @@ impl<R> Default for Task<R> {
 }
 
 /// 协程的输入参数
-pub struct TaskInput<T> {
+pub struct CoroutineTaskInput<T> {
     /// 使用裸指针传递任意类型的数据，避免生命周期限制
     pub data_ptr: Option<NonNull<T>>,
     /// 异步操作的结果
@@ -118,18 +131,18 @@ pub struct TaskInput<T> {
 }
 
 // 手动实现 Debug，避免 NonNull 的限制
-impl<T> std::fmt::Debug for TaskInput<T> {
+impl<T> std::fmt::Debug for CoroutineTaskInput<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TaskInput")
+        f.debug_struct("CoroutineTaskInput")
             .field("data_ptr", &self.data_ptr.is_some())
             .field("async_result", &self.async_result.is_some())
             .finish()
     }
 }
 
-unsafe impl<T: Send> Send for TaskInput<T> {}
+unsafe impl<T: Send> Send for CoroutineTaskInput<T> {}
 
-impl<T> TaskInput<T> {
+impl<T> CoroutineTaskInput<T> {
     /// 获取数据的可变引用
     /// 
     /// # Safety
@@ -154,14 +167,14 @@ impl<T> TaskInput<T> {
 
 /// 管理所有运行中的协程任务
 #[derive(Resource, Default)]
-pub struct RunningTask {
+pub struct RunningCoroutines {
     /// 活跃的协程任务
     pub systems: HashMap<&'static str, ()>,
     /// 注册的系统ID
     pub register_systems: HashMap<&'static str, SystemId>,
 }
 
-fn update_running_tasks(mut commands: Commands, running_task: Res<RunningTask>) {
+fn update_running_tasks(mut commands: Commands, running_task: Res<RunningCoroutines>) {
     if running_task.systems.is_empty() {
         return;
     }
@@ -250,4 +263,32 @@ pub fn next_frame() -> Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send>>
 macro_rules! yield_async {
     ($fut:expr) => {{
     }};
+}
+
+/// 预导入模块，包含常用的类型和功能
+/// 
+/// # Example
+/// ```rust,ignore
+/// use bevy_coroutine_system::prelude::*;
+/// ```
+pub mod prelude {
+    pub use crate::{
+        // Trait
+        CoroutineSystem,
+        
+        // 宏（从 bevy_coroutine_system_macro 重新导出）
+        coroutine_system,
+        
+        // 插件
+        CoroutinePlugin,
+        
+        // 函数
+        sleep,
+        next_frame,
+        
+        // 类型
+        CoroutineTask,
+        CoroutineTaskInput,
+        RunningCoroutines,
+    };
 }

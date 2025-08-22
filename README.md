@@ -53,7 +53,7 @@ rustup override set nightly
 #![feature(coroutines, coroutine_trait)]
 
 use bevy::prelude::*;
-use bevy_coroutine_system::{coroutine_system, sleep, plugin, CoroutineSystem};
+use bevy_coroutine_system::prelude::*;
 use std::time::Duration;
 
 #[coroutine_system]
@@ -78,7 +78,7 @@ fn my_coroutine_system(
 fn main() {
     let mut app = App::new();
     
-    app.add_plugins((DefaultPlugins, plugin));
+    app.add_plugins((DefaultPlugins, CoroutinePlugin));
     
     // 注册协程系统
     app.register_coroutine(my_coroutine_system, my_coroutine_system::id());
@@ -148,14 +148,14 @@ struct MyCoroutineSystemParams<'w, 's> {
 // 实际的系统函数
 fn my_coroutine_system<'w, 's>(
     params: MyCoroutineSystemParams<'w, 's>,
-    mut task: Local<Task<TaskInput<MyCoroutineSystemParams<'static, 'static>>>>,
-    mut running_task: ResMut<RunningTask>,
+    mut task: Local<CoroutineTask<CoroutineTaskInput<MyCoroutineSystemParams<'static, 'static>>>>,
+    mut running_task: ResMut<RunningCoroutines>,
 ) {
     // 首次运行时创建协程
     if task.coroutine.is_none() {
         task.coroutine = Some(Box::pin(
             #[coroutine]
-            move |mut input: TaskInput<MyCoroutineSystemParams<'static, 'static>>| {
+            move |mut input: CoroutineTaskInput<MyCoroutineSystemParams<'static, 'static>>| {
                 // 获取参数的裸指针
                 let params = input.data_mut();
                 let query = &mut params.query;
@@ -197,7 +197,7 @@ fn my_coroutine_system<'w, 's>(
     }
     
     // 创建协程输入，包含参数指针和异步结果
-    let input = TaskInput {
+    let input = CoroutineTaskInput {
         data_ptr: Some(unsafe { NonNull::new_unchecked(&params as *const _ as *mut _) }),
         async_result,
     };
@@ -231,9 +231,9 @@ pub mod my_coroutine_system {
 ### 🔑 关键机制
 
 1. **🔐 生命周期处理**: 使用裸指针(`NonNull`)传递参数，绕过 Rust 的生命周期检查
-2. **📦 协程状态**: 通过 `Local<Task>` 保存协程状态，实现跨帧持久化
+2. **📦 协程状态**: 通过 `Local<CoroutineTask>` 保存协程状态，实现跨帧持久化
 3. **⚡ 异步支持**: yield 的 Future 在每帧被轮询，直到完成
-4. **🔄 自动注册**: `RunningTask` 资源跟踪所有活跃的协程，确保它们每帧执行
+4. **🔄 自动注册**: `RunningCoroutines` 资源跟踪所有活跃的协程，确保它们每帧执行
 
 ## 📚 示例
 

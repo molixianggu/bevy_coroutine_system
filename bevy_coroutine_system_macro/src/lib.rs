@@ -168,11 +168,11 @@ pub fn coroutine_system(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #fn_vis fn #fn_name<'w, 's>(
             params: #params_struct_name<'w, 's>,
             mut __task: ::bevy::prelude::Local<
-                ::bevy_coroutine_system::Task<
-                    ::bevy_coroutine_system::TaskInput<#params_struct_name<'static, 'static>>
+                ::bevy_coroutine_system::CoroutineTask<
+                    ::bevy_coroutine_system::CoroutineTaskInput<#params_struct_name<'static, 'static>>
                 >
             >,
-            mut __running_task: ::bevy::prelude::ResMut<::bevy_coroutine_system::RunningTask>,
+            mut __running_task: ::bevy::prelude::ResMut<::bevy_coroutine_system::RunningCoroutines>,
         ) {
             use ::std::ops::Coroutine;
             use ::std::pin::Pin;
@@ -183,7 +183,7 @@ pub fn coroutine_system(_attr: TokenStream, item: TokenStream) -> TokenStream {
             if __task.coroutine.is_none() {
                 __task.coroutine = Some(Box::pin(
                     #[coroutine]
-                    move |mut __coroutine_input: ::bevy_coroutine_system::TaskInput<#params_struct_name<'static, 'static>>| {
+                    move |mut __coroutine_input: ::bevy_coroutine_system::CoroutineTaskInput<#params_struct_name<'static, 'static>>| {
                         #transformed_body
                     }
                 ));
@@ -209,7 +209,7 @@ pub fn coroutine_system(_attr: TokenStream, item: TokenStream) -> TokenStream {
             }
             
             // 创建输入
-            let __coroutine_input = ::bevy_coroutine_system::TaskInput {
+            let __coroutine_input = ::bevy_coroutine_system::CoroutineTaskInput {
                 data_ptr: Some(unsafe { NonNull::new_unchecked(&params as *const _ as *mut _) }),
                 async_result,
             };

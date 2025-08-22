@@ -1,6 +1,42 @@
 //! Bevy 协程系统的主要库
 //! 
 //! 该库提供了在Bevy系统中使用协程的能力，允许系统在多帧执行并暂停/恢复。
+//!
+//! # 特性
+//! 
+//! - 🎮 **多帧执行**: 系统可以跨多个游戏帧执行
+//! - ⏸️ **暂停/恢复**: 支持在任意点暂停执行并在后续帧恢复
+//! - 🔄 **异步操作**: 内置对异步操作的支持（如延时等待）
+//! - 🛠️ **简单易用**: 通过宏自动处理复杂的生命周期和状态管理
+//!
+//! # 快速开始
+//!
+//! ```rust,ignore
+//! #![feature(coroutines, coroutine_trait)]
+//! 
+//! use bevy::prelude::*;
+//! use bevy_coroutine_system::{coroutine_system, sleep, plugin, CoroutineSystem};
+//! use std::time::Duration;
+//!
+//! #[coroutine_system]
+//! fn my_coroutine_system(
+//!     mut commands: Commands,
+//!     mut query: Query<&mut Transform>,
+//! ) {
+//!     // 第一帧执行
+//!     for mut transform in query.iter_mut() {
+//!         transform.translation.x += 10.0;
+//!     }
+//!     
+//!     // 暂停1秒
+//!     yield sleep(Duration::from_secs(1));
+//!     
+//!     // 恢复后继续执行
+//!     for mut transform in query.iter_mut() {
+//!         transform.translation.y += 10.0;
+//!     }
+//! }
+//! ```
 
 #![feature(coroutines, coroutine_trait)]
 

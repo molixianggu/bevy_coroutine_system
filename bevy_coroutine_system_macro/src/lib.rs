@@ -1,11 +1,31 @@
+//! Bevy 协程系统的过程宏
+//! 
+//! 本包提供了 `#[coroutine_system]` 宏，用于将普通的 Bevy 系统转换为支持协程的系统。
+//! 
+//! # 使用示例
+//! 
+//! ```rust,ignore
+//! use bevy_coroutine_system::coroutine_system;
+//! 
+//! #[coroutine_system]
+//! fn my_system(query: Query<&mut Transform>) {
+//!     // 系统代码...
+//! }
+//! ```
+
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{parse_macro_input, FnArg, ItemFn, Pat, ReturnType};
 
 /// 协程系统的过程宏
 /// 
-/// # Example
-/// ```rust
+/// 该宏将普通的 Bevy 系统函数转换为支持协程的系统，允许系统在多帧执行。
+/// 
+/// # 使用方法
+/// 
+/// 在任何符合 Bevy 系统签名的函数上使用此宏：
+/// 
+/// ```rust,ignore
 /// #[coroutine_system]
 /// fn my_system(mut commands: Commands, query: Query<&mut Transform>) {
 ///     for mut transform in query.iter_mut() {
@@ -20,6 +40,16 @@ use syn::{parse_macro_input, FnArg, ItemFn, Pat, ReturnType};
 ///     }
 /// }
 /// ```
+/// 
+/// # 支持的参数类型
+/// 
+/// - 所有实现了 `SystemParam` 的类型
+/// - 包括但不限于：`Commands`, `Query`, `Res`, `ResMut`, `Local` 等
+/// 
+/// # 限制
+/// 
+/// - 函数必须返回 `()` (unit type)
+/// - 需要 Rust nightly 版本和相应的 feature flags
 #[proc_macro_attribute]
 pub fn coroutine_system(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input_fn = parse_macro_input!(item as ItemFn);

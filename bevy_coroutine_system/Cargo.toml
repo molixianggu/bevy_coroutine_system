@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2024"
 description = "A coroutine system for Bevy game engine"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/molixianggu/bevy_coroutine_system"
+readme = "../README.md"
+keywords = ["bevy", "coroutine", "game", "async", "yield"]
+categories = ["game-development", "asynchronous"]
 
 [dependencies]
 bevy = "0.16.1"

@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2024"
 description = "Procedural macros for bevy_coroutine_system"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/molixianggu/bevy_coroutine_system"
+keywords = ["bevy", "coroutine", "macro", "game", "async"]
+categories = ["game-development", "asynchronous"]
 
 [lib]
 proc-macro = true

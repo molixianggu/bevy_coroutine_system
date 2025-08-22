@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "bevy_coroutine_system",
+    "bevy_coroutine_system_macro"
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"

@@ -356,6 +356,52 @@ cargo run --example minimal
 - 🚧 Coroutine features are still experimental
 - 💡 Uses unsafe raw pointers for parameter passing
 - 📊 Limited macro coverage, some parameters might not be supported yet
+- ⚠️ **Important Safety Limitation**: Do NOT hold references to `SystemParam` across `yield` points! This will cause undefined behavior
+
+### 🛡️ Safety Guide
+
+Due to implementation constraints, the coroutine system internally uses raw pointers to bypass lifetime checks. This means you must follow these rules:
+
+#### ❌ Incorrect Usage
+```rust
+#[coroutine_system]
+fn unsafe_system(query: Query<&mut Transform>) {
+    // Dangerous: holding references across yield
+    let transform_vec: Vec<&Transform> = query.iter().collect();
+    
+    yield sleep(Duration::from_secs(1));
+    
+    // Undefined behavior! These references may now point to invalid memory
+    for transform in transform_vec {
+        println!("{:?}", transform);
+    }
+}
+```
+
+#### ✅ Correct Usage
+```rust
+#[coroutine_system]
+fn safe_system(query: Query<(Entity, &Transform)>) {
+    // Safe: only store Entity IDs
+    let entities: Vec<Entity> = query.iter()
+        .map(|(entity, _)| entity)
+        .collect();
+    
+    yield sleep(Duration::from_secs(1));
+    
+    // Safe: re-query using Entity IDs
+    for entity in entities {
+        if let Ok((_, transform)) = query.get(entity) {
+            println!("{:?}", transform);
+        }
+    }
+}
+```
+
+#### 💡 Best Practices
+1. **Process Immediately**: Complete all operations requiring references before `yield`
+2. **Store IDs**: Only store `Entity` or other Copy types
+3. **Re-query**: Re-fetch needed data after `yield`
 
 ## 🤝 Contributing
 

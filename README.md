@@ -1,7 +1,5 @@
 # 🚀 Bevy Coroutine System
 
-[Read this document in English (阅读英文文档)](./README-en.md)
-
 [![Rust](https://img.shields.io/badge/rust-nightly-orange.svg)](https://www.rust-lang.org/)
 [![Bevy](https://img.shields.io/badge/bevy-0.16-blue.svg)](https://bevyengine.org/)
 

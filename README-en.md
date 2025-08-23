@@ -3,7 +3,7 @@
 [![Rust](https://img.shields.io/badge/rust-nightly-orange.svg)](https://www.rust-lang.org/)
 [![Bevy](https://img.shields.io/badge/bevy-0.16-blue.svg)](https://bevyengine.org/)
 
-[Read this document in Chinese (阅读中文文档)](./README.md)
+English | [中文](./README.md)
 
 A coroutine system designed for the Bevy game engine, allowing systems to execute across multiple frames with pause/resume support.
 

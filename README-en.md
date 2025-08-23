@@ -104,8 +104,8 @@ fn trigger_coroutine(
 
 ### 📋 Overview
 
-1. **🔮 Procedural Macro Transformation**: The `#[coroutine_system]` macro transforms regular functions into coroutine systems
-2. **💾 State Management**: Each coroutine's state is managed by the `Task` structure
+1. **🔮 Procedural Macro Transformation**: The `#[coroutine_system]` macro transforms coroutine functions into regular, repeatable Bevy system functions
+2. **💾 State Management**: Each coroutine's state is managed by the `CoroutineTask` structure
 3. **🔗 Parameter Passing**: Uses raw pointer mechanism to bypass Bevy's lifetime restrictions
 4. **⚡ Async Integration**: Futures are polled each frame until completion
 

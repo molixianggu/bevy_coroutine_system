@@ -1,12 +1,13 @@
 [package]
 name = "bevy_coroutine_system_macro"
-version = "0.1.2"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 description = "Procedural macros for bevy_coroutine_system"
-license = "MIT OR Apache-2.0"
+license.workspace = true
 repository = "https://github.com/molixianggu/bevy_coroutine_system"
 keywords = ["bevy", "coroutine", "macro", "game", "async"]
 categories = ["game-development", "asynchronous"]
+readme = "../README.md"
 
 [lib]
 proc-macro = true

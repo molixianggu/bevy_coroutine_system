@@ -490,7 +490,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_coroutine_system"
-version = "0.1.2"
+version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_coroutine_system_macro",
@@ -499,7 +499,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_coroutine_system_macro"
-version = "0.1.2"
+version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",

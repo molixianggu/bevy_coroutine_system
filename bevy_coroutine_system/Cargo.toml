@@ -1,9 +1,9 @@
 [package]
 name = "bevy_coroutine_system"
-version = "0.1.2"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 description = "A coroutine system for Bevy game engine"
-license = "MIT OR Apache-2.0"
+license.workspace = true
 repository = "https://github.com/molixianggu/bevy_coroutine_system"
 readme = "../README.md"
 keywords = ["bevy", "coroutine", "game", "async", "yield"]
@@ -11,7 +11,7 @@ categories = ["game-development", "asynchronous"]
 
 [dependencies]
 bevy = "0.16.1"
-bevy_coroutine_system_macro = { path = "../bevy_coroutine_system_macro" }
+bevy_coroutine_system_macro = { path = "../bevy_coroutine_system_macro", version = "0.1.0" }
 
 [dev-dependencies]
 bevy = "0.16.1"

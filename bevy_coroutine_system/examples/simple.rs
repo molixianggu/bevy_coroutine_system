@@ -81,5 +81,10 @@ fn simple_coroutine(
     info!("Coroutine completed!");
 }
 
+#[derive(Event)]
+struct AEvent;
+
 #[coroutine_system]
-fn simple_coroutine_2(_time: Res<Time>) {}
+fn simple_coroutine_2(_time: Res<Time>, mut event_writer: EventWriter<AEvent>, mut event_reader: EventReader<AEvent>) {
+}
+

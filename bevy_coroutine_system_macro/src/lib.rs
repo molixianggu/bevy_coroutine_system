@@ -431,7 +431,8 @@ fn analyze_lifetime_requirements(ty: &syn::Type) -> LifetimeRequirement {
                     "Query" => req.merge(LifetimeRequirement { needs_w: true, needs_s: true }),
                     "Res" | "ResMut" => req.merge(LifetimeRequirement { needs_w: true, needs_s: false }),
                     "Local" => req.merge(LifetimeRequirement { needs_w: false, needs_s: true }),
-                    "EventReader" | "EventWriter" => req.merge(LifetimeRequirement { needs_w: true, needs_s: true }),
+                    "EventWriter" => req.merge(LifetimeRequirement { needs_w: true, needs_s: false }),
+                    "EventReader" => req.merge(LifetimeRequirement { needs_w: true, needs_s: true }),
                     _ => {}
                 }
                 
@@ -494,7 +495,9 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                 
                 // 检查是否是需要生命周期的Bevy类型
                 let needs_lifetimes = match ident_str.as_str() {
-                    "Commands" | "Query" | "Res" | "ResMut" | "Local" | "EventReader" | "EventWriter" => true,
+                    "Commands" | "Query" | "Local" => true,
+                    "Res" | "ResMut" | "EventWriter" => true,
+                    "EventReader" => true,
                     _ => false,
                 };
                 
@@ -502,12 +505,13 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                     PathArguments::None => {
                         if needs_lifetimes {
                             // 为这些类型添加生命周期
-                            if ident_str == "Res" || ident_str == "ResMut" {
-                                // Res 和 ResMut 只需要一个生命周期
+                            if ident_str == "Res" || ident_str == "ResMut" || ident_str == "EventWriter" {
+                                // Res, ResMut 和 EventWriter 只需要一个生命周期
                                 segment.arguments = PathArguments::AngleBracketed(
                                     parse_quote! { <'w> }
                                 );
                             } else {
+                                // Commands, Query, Local, EventReader 需要两个生命周期
                                 segment.arguments = PathArguments::AngleBracketed(
                                     parse_quote! { <'w, 's> }
                                 );
@@ -532,9 +536,9 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                             let mut final_args = syn::punctuated::Punctuated::new();
                             
                             // 插入生命周期
-                            if ident_str == "Res" || ident_str == "ResMut" {
+                            if ident_str == "Res" || ident_str == "ResMut" || ident_str == "EventWriter" {
                                 final_args.push(parse_quote! { 'w });
-                            } else if ident_str == "Query" {
+                            } else if ident_str == "Query" || ident_str == "Commands" || ident_str == "Local" || ident_str == "EventReader" {
                                 final_args.push(parse_quote! { 'w });
                                 final_args.push(parse_quote! { 's });
                             }

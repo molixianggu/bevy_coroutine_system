@@ -3,7 +3,7 @@
 [![Rust](https://img.shields.io/badge/rust-nightly-orange.svg)](https://www.rust-lang.org/)
 [![Bevy](https://img.shields.io/badge/bevy-0.16-blue.svg)](https://bevyengine.org/)
 
-English | [中文](./README.md)
+[Read this document in Chinese (阅读中文文档)](./README.md)
 
 A coroutine system designed for the Bevy game engine, allowing systems to execute across multiple frames with pause/resume support.
 
@@ -28,7 +28,7 @@ A coroutine system designed for the Bevy game engine, allowing systems to execut
 ```toml
 [dependencies]
 bevy = "0.16"
-bevy_coroutine_system = { path = "path/to/bevy_coroutine_system" }
+bevy_coroutine_system = "0.1.0"
 ```
 
 ### 2️⃣ Set up Nightly Toolchain

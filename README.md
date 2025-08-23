@@ -1,5 +1,7 @@
 # 🚀 Bevy Coroutine System
 
+[Read this document in English (阅读英文文档)](./README-en.md)
+
 [![Rust](https://img.shields.io/badge/rust-nightly-orange.svg)](https://www.rust-lang.org/)
 [![Bevy](https://img.shields.io/badge/bevy-0.16-blue.svg)](https://bevyengine.org/)
 
@@ -28,7 +30,7 @@
 ```toml
 [dependencies]
 bevy = "0.16"
-bevy_coroutine_system = { path = "path/to/bevy_coroutine_system" }
+bevy_coroutine_system = "0.1.0"
 ```
 
 ### 2️⃣ 设置 nightly 工具链

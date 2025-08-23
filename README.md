@@ -213,6 +213,7 @@ fn my_coroutine_system<'w, 's>(
                 // 协程执行完毕，清理状态
                 task.coroutine = None;
                 running_task.systems.remove(my_coroutine_system::id());
+                return;
             }
         }
     }
@@ -246,6 +247,28 @@ pub mod my_coroutine_system {
 ```bash
 cargo run --example simple
 cargo run --example minimal
+```
+
+### 借用检查错误
+
+在条件分支中使用 `yield` 时，可能遇到借用检查错误：
+
+```rust
+// ❌ 错误示例
+if condition {
+    yield sleep(Duration::from_secs(1));  // 只有一个分支有 yield
+}
+// 使用参数时报错：borrow may still be in use when coroutine yields
+```
+
+**解决方案**：在条件分支后添加 `yield noop()` 统一所有控制流路径：
+
+```rust
+// ✅ 正确示例
+if condition {
+    yield sleep(Duration::from_secs(1));
+}
+yield noop();  // 确保所有路径都有 yield 点
 ```
 
 ## ⚠️ 限制

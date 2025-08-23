@@ -108,8 +108,6 @@ pub struct CoroutineTask<R> {
     >,
     /// 当前挂起的Future
     pub fut: Option<Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send>>>,
-    /// 初始化标志
-    pub init: bool,
 }
 
 impl<R> Default for CoroutineTask<R> {
@@ -117,7 +115,6 @@ impl<R> Default for CoroutineTask<R> {
         Self {
             coroutine: None,
             fut: None,
-            init: false,
         }
     }
 }
@@ -248,6 +245,30 @@ pub fn next_frame() -> Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send>>
     })
 }
 
+/// 创建一个空操作（no-op）的 Future
+/// 
+/// 这个函数立即返回，不执行任何操作。主要用于在协程中创建一个 yield 点，
+/// 帮助解决借用检查问题
+/// 
+/// # Example
+/// ```rust,ignore
+/// // 在两个可能有借用冲突的代码块之间使用
+/// yield noop();
+/// ```
+pub fn noop() -> Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send>> {
+    struct NoopFuture;
+    
+    impl Future for NoopFuture {
+        type Output = Box<dyn Any + Send>;
+        
+        fn poll(self: Pin<&mut Self>, _cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
+            std::task::Poll::Ready(Box::new(()) as Box<dyn Any + Send>)
+        }
+    }
+    
+    Box::pin(NoopFuture)
+}
+
 /// yield_async!宏（已废弃，推荐使用原生 yield 语法）
 /// 
 /// 现在可以直接使用原生的 yield 语法：
@@ -285,6 +306,7 @@ pub mod prelude {
         // 函数
         sleep,
         next_frame,
+        noop,
         
         // 类型
         CoroutineTask,

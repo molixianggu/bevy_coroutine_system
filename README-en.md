@@ -213,6 +213,7 @@ fn my_coroutine_system<'w, 's>(
                 // Coroutine completed, clean up state
                 task.coroutine = None;
                 running_task.systems.remove(my_coroutine_system::id());
+                return;
             }
         }
     }
@@ -246,6 +247,28 @@ Run examples:
 ```bash
 cargo run --example simple
 cargo run --example minimal
+```
+
+### Borrow Checker Errors
+
+When using `yield` in conditional branches, you may encounter borrow checker errors:
+
+```rust
+// ❌ Incorrect example
+if condition {
+    yield sleep(Duration::from_secs(1));  // Only one branch has yield
+}
+// Error when using parameters: borrow may still be in use when coroutine yields
+```
+
+**Solution**: Add `yield noop()` after conditional branches to unify all control flow paths:
+
+```rust
+// ✅ Correct example
+if condition {
+    yield sleep(Duration::from_secs(1));
+}
+yield noop();  // Ensures all paths have a yield point
 ```
 
 ## ⚠️ Limitations

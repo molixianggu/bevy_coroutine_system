@@ -133,6 +133,7 @@ pub fn coroutine_system(_attr: TokenStream, item: TokenStream) -> TokenStream {
         // 两个生命周期都被使用
         quote! {
             #[derive(::bevy::ecs::system::SystemParam)]
+            #[allow(dead_code)]
             struct #params_struct_name<'w, 's> {
                 #(#param_names: #param_types,)*
             }
@@ -191,40 +192,49 @@ pub fn coroutine_system(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 __running_task.systems.insert(#fn_name::id(), ());
             }
             
-            // 处理异步结果
-            let mut async_result = None;
-            
-            if let Some(fut) = &mut __task.fut {
-                let waker = Waker::noop();
-                let mut cx = Context::from_waker(&waker);
-                match fut.as_mut().poll(&mut cx) {
-                    Poll::Ready(v) => {
-                        async_result = Some(v);
-                        __task.fut = None;
-                    }
-                    Poll::Pending => {
-                        return;
+            // 循环处理，直到遇到 pending 的 async 操作或协程完成
+            loop {
+                // 处理异步结果
+                let mut async_result = None;
+                
+                if let Some(fut) = &mut __task.fut {
+                    let waker = Waker::noop();
+                    let mut cx = Context::from_waker(&waker);
+                    match fut.as_mut().poll(&mut cx) {
+                        Poll::Ready(v) => {
+                            async_result = Some(v);
+                            __task.fut = None;
+                        }
+                        Poll::Pending => {
+                            // async 操作未完成，退出循环等待下一帧
+                            return;
+                        }
                     }
                 }
-            }
-            
-            // 创建输入
-            let __coroutine_input = ::bevy_coroutine_system::CoroutineTaskInput {
-                data_ptr: Some(unsafe { NonNull::new_unchecked(&params as *const _ as *mut _) }),
-                async_result,
-            };
-            
-            // 恢复协程
-            if let Some(coroutine) = &mut __task.coroutine {
-                match coroutine.as_mut().resume(__coroutine_input) {
-                    ::std::ops::CoroutineState::Yielded(output) => {
-                        __task.fut = Some(output);
+                
+                // 创建输入
+                let __coroutine_input = ::bevy_coroutine_system::CoroutineTaskInput {
+                    data_ptr: Some(unsafe { NonNull::new_unchecked(&params as *const _ as *mut _) }),
+                    async_result,
+                };
+                
+                // 恢复协程
+                if let Some(coroutine) = &mut __task.coroutine {
+                    match coroutine.as_mut().resume(__coroutine_input) {
+                        ::std::ops::CoroutineState::Yielded(output) => {
+                            __task.fut = Some(output);
+                            // 继续循环，检查新 yield 的 future 是否立即完成
+                        }
+                        ::std::ops::CoroutineState::Complete(()) => {
+                            __task.coroutine = None;
+                            __task.fut = None;
+                            __running_task.systems.remove(#fn_name::id());
+                            return;
+                        }
                     }
-                    ::std::ops::CoroutineState::Complete(()) => {
-                        __task.init = false;
-                        __task.coroutine = None;
-                        __running_task.systems.remove(#fn_name::id());
-                    }
+                } else {
+                    // 没有协程了，退出循环
+                    break;
                 }
             }
         }

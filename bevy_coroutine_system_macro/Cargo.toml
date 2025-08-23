@@ -7,7 +7,7 @@ license.workspace = true
 repository = "https://github.com/molixianggu/bevy_coroutine_system"
 keywords = ["bevy", "coroutine", "macro", "game", "async"]
 categories = ["game-development", "asynchronous"]
-readme = "../README.md"
+readme = "../README-en.md"
 
 [lib]
 proc-macro = true

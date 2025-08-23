@@ -5,7 +5,7 @@ edition.workspace = true
 description = "A coroutine system for Bevy game engine"
 license.workspace = true
 repository = "https://github.com/molixianggu/bevy_coroutine_system"
-readme = "../README.md"
+readme = "../README-en.md"
 keywords = ["bevy", "coroutine", "game", "async", "yield"]
 categories = ["game-development", "asynchronous"]
 

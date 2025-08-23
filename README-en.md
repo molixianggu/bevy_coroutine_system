@@ -28,7 +28,7 @@ A coroutine system designed for the Bevy game engine, allowing systems to execut
 ```toml
 [dependencies]
 bevy = "0.16"
-bevy_coroutine_system = "0.1.0"
+bevy_coroutine_system = "0.1.1"
 ```
 
 ### 2️⃣ Set up Nightly Toolchain

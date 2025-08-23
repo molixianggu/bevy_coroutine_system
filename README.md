@@ -28,7 +28,7 @@
 ```toml
 [dependencies]
 bevy = "0.16"
-bevy_coroutine_system = "0.1.0"
+bevy_coroutine_system = "0.1.1"
 ```
 
 ### 2️⃣ 设置 nightly 工具链

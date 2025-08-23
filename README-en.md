@@ -102,7 +102,7 @@ fn trigger_coroutine(
 
 ### Execution Methods for Coroutine Systems
 
-Coroutine systems can be executed in two ways, with important behavioral differences:
+Coroutine systems can be executed in two ways, with behavioral differences:
 
 #### Method 1: Register and Trigger Manually (One-time Execution)
 
@@ -172,10 +172,18 @@ yield next_frame();
 
 #### 3. `noop()` - No Operation
 
-Returns immediately without doing anything. Mainly used to solve borrow checker issues in conditional branches:
+Returns immediately without doing anything. Mainly used to solve borrow checker issues in conditional branches.
+
+When using `yield` in conditional branches where only some branches have yield, you may encounter "borrow may still be in use when coroutine yields" error:
 
 ```rust
-// Use when only some paths in conditional branches have yield
+// ❌ Incorrect example
+if condition {
+    yield sleep(Duration::from_secs(1));  // Only one branch has yield
+}
+// Error when using parameters
+
+// ✅ Correct example
 if condition {
     yield sleep(Duration::from_secs(1));
 }
@@ -189,38 +197,9 @@ You can get return values from yield expressions by explicitly specifying the ty
 ```rust
 // Explicitly specify return type
 let result: std::time::Instant = yield sleep(Duration::from_secs(1));
-
-// Or use type annotation
-let result = yield sleep(Duration::from_secs(1));
-let _: std::time::Instant = result;
 ```
 
-⚠️ **Warning**: If the specified type doesn't match the actual return type, the program will panic! Make sure to use the correct types:
-- `sleep()` returns `std::time::Instant`
-
-While these return values have limited usefulness currently, more useful return information may be added in the future.
-
-### Borrow Checker Errors
-
-When using `yield` in conditional branches, you may encounter borrow checker errors:
-
-```rust
-// ❌ Incorrect example
-if condition {
-    yield sleep(Duration::from_secs(1));  // Only one branch has yield
-}
-// Error when using parameters: borrow may still be in use when coroutine yields
-```
-
-**Solution**: Add `yield noop()` after conditional branches to unify all control flow paths:
-
-```rust
-// ✅ Correct example
-if condition {
-    yield sleep(Duration::from_secs(1));
-}
-yield noop();  // Ensures all paths have a yield point
-```
+⚠️ **Warning**: If the specified type doesn't match the actual return type, the program will panic! Make sure to use the correct types (see the function descriptions above).
 
 ## 🔍 How It Works
 

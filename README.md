@@ -102,7 +102,7 @@ fn trigger_coroutine(
 
 ### 协程系统的执行方式
 
-协程系统可以通过两种方式执行，它们的行为有重要区别：
+协程系统可以通过两种方式执行，它们的行为有区别：
 
 #### 方式1：注册并手动触发（一次性执行）
 
@@ -172,10 +172,18 @@ yield next_frame();
 
 #### 3. `noop()` - 空操作
 
-立即返回，不执行任何操作。主要用于解决条件分支中的借用检查问题：
+立即返回，不执行任何操作。主要用于解决条件分支中的借用检查问题。
+
+当在条件分支中使用 `yield` 时，如果只有部分分支有 yield，可能会遇到 "borrow may still be in use when coroutine yields" 错误：
 
 ```rust
-// 当条件分支中只有部分路径有 yield 时使用
+// ❌ 错误示例
+if condition {
+    yield sleep(Duration::from_secs(1));  // 只有一个分支有 yield
+}
+// 使用参数时报错
+
+// ✅ 正确示例
 if condition {
     yield sleep(Duration::from_secs(1));
 }
@@ -191,32 +199,7 @@ yield noop(); // 确保所有控制流路径都有 yield 点
 let result: std::time::Instant = yield sleep(Duration::from_secs(1));
 ```
 
-⚠️ **警告**：如果指定的类型与实际返回类型不匹配，程序会 panic！确保使用正确的类型：
-- `sleep()` 返回 `std::time::Instant`
-
-虽然目前这些返回值的实用性有限，但未来可能会扩展更多有用的返回信息。
-
-### 借用检查错误
-
-在条件分支中使用 `yield` 时，可能遇到借用检查错误：
-
-```rust
-// ❌ 错误示例
-if condition {
-    yield sleep(Duration::from_secs(1));  // 只有一个分支有 yield
-}
-// 使用参数时报错：borrow may still be in use when coroutine yields
-```
-
-**解决方案**：在条件分支后添加 `yield noop()` 统一所有控制流路径：
-
-```rust
-// ✅ 正确示例
-if condition {
-    yield sleep(Duration::from_secs(1));
-}
-yield noop();  // 确保所有路径都有 yield 点
-```
+⚠️ **警告**：如果指定的类型与实际返回类型不匹配，程序会 panic！请确保使用正确的类型（见上述各函数说明）。
 
 ## 🔍 工作原理
 

@@ -495,7 +495,8 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                 
                 // 检查是否是需要生命周期的Bevy类型
                 let needs_lifetimes = match ident_str.as_str() {
-                    "Commands" | "Query" | "Local" => true,
+                    "Commands" | "Query" => true,
+                    "Local" => true,
                     "Res" | "ResMut" | "EventWriter" => true,
                     "EventReader" => true,
                     _ => false,
@@ -506,12 +507,17 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                         if needs_lifetimes {
                             // 为这些类型添加生命周期
                             if ident_str == "Res" || ident_str == "ResMut" || ident_str == "EventWriter" {
-                                // Res, ResMut 和 EventWriter 只需要一个生命周期
+                                // Res, ResMut 和 EventWriter 只需要一个生命周期 'w
                                 segment.arguments = PathArguments::AngleBracketed(
                                     parse_quote! { <'w> }
                                 );
+                            } else if ident_str == "Local" {
+                                // Local 只需要一个生命周期 's
+                                segment.arguments = PathArguments::AngleBracketed(
+                                    parse_quote! { <'s> }
+                                );
                             } else {
-                                // Commands, Query, Local, EventReader 需要两个生命周期
+                                // Commands, Query, EventReader 需要两个生命周期
                                 segment.arguments = PathArguments::AngleBracketed(
                                     parse_quote! { <'w, 's> }
                                 );
@@ -538,7 +544,9 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                             // 插入生命周期
                             if ident_str == "Res" || ident_str == "ResMut" || ident_str == "EventWriter" {
                                 final_args.push(parse_quote! { 'w });
-                            } else if ident_str == "Query" || ident_str == "Commands" || ident_str == "Local" || ident_str == "EventReader" {
+                            } else if ident_str == "Local" {
+                                final_args.push(parse_quote! { 's });
+                            } else if ident_str == "Query" || ident_str == "Commands" || ident_str == "EventReader" {
                                 final_args.push(parse_quote! { 'w });
                                 final_args.push(parse_quote! { 's });
                             }

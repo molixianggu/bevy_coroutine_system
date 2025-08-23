@@ -85,6 +85,6 @@ fn simple_coroutine(
 struct AEvent;
 
 #[coroutine_system]
-fn simple_coroutine_2(_time: Res<Time>, mut event_writer: EventWriter<AEvent>, mut event_reader: EventReader<AEvent>) {
+fn simple_coroutine_2(time: Res<Time>, mut event_writer: EventWriter<AEvent>, mut event_reader: EventReader<AEvent>, mut query: Query<&Transform, With<Player>>, mut commands: Commands, a: Local<i32>) {
 }
 

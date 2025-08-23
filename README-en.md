@@ -100,6 +100,128 @@ fn trigger_coroutine(
 }
 ```
 
+### Execution Methods for Coroutine Systems
+
+Coroutine systems can be executed in two ways, with important behavioral differences:
+
+#### Method 1: Register and Trigger Manually (One-time Execution)
+
+After registering a coroutine system, execute it through manual triggering. The coroutine will run continuously until completion:
+
+```rust
+// Register the coroutine system
+app.register_coroutine(my_coroutine_system, my_coroutine_system::id());
+
+// Manual trigger (e.g., responding to keyboard input)
+fn trigger_system(mut commands: Commands, keyboard: Res<ButtonInput<KeyCode>>) {
+    if keyboard.just_pressed(KeyCode::Space) {
+        commands.run_system_cached(my_coroutine_system);
+    }
+}
+```
+
+In this mode, the coroutine executes once through its complete flow until it finishes.
+
+#### Method 2: As a Regular System (Loop Execution)
+
+Add the coroutine system as a regular Bevy system, **without** using `register_coroutine`:
+
+```rust
+// Add directly as an Update system
+app.add_systems(Update, my_coroutine_system);
+```
+
+In this mode, the coroutine will execute repeatedly. For example:
+
+```rust
+#[coroutine_system]
+fn repeating_coroutine() {
+    info!("1");
+    yield sleep(Duration::from_secs(1));
+    info!("2");
+}
+```
+
+The output will be: `1, 2, 1, 2, 1, 2...` (with a 1-second interval between each loop)
+
+### Built-in Async Functions
+
+This library provides three built-in async functions to control coroutine execution flow:
+
+#### 1. `sleep(duration)` - Timed Delay
+
+Wait for a specified duration before continuing:
+
+```rust
+use std::time::{Duration, Instant};
+
+// Wait for 1 second
+let wake_time: Instant = yield sleep(Duration::from_secs(1));
+// wake_time is the timestamp when awakened
+```
+
+#### 2. `next_frame()` - Wait for Next Frame
+
+Pause execution until the next frame:
+
+```rust
+// Wait for one frame
+yield next_frame();
+// Returns (), usually no need to capture the result
+```
+
+#### 3. `noop()` - No Operation
+
+Returns immediately without doing anything. Mainly used to solve borrow checker issues in conditional branches:
+
+```rust
+// Use when only some paths in conditional branches have yield
+if condition {
+    yield sleep(Duration::from_secs(1));
+}
+yield noop(); // Ensures all control flow paths have a yield point
+```
+
+### Getting Return Values from Async Operations
+
+You can get return values from yield expressions by explicitly specifying the type:
+
+```rust
+// Explicitly specify return type
+let result: std::time::Instant = yield sleep(Duration::from_secs(1));
+
+// Or use type annotation
+let result = yield sleep(Duration::from_secs(1));
+let _: std::time::Instant = result;
+```
+
+⚠️ **Warning**: If the specified type doesn't match the actual return type, the program will panic! Make sure to use the correct types:
+- `sleep()` returns `std::time::Instant`
+
+While these return values have limited usefulness currently, more useful return information may be added in the future.
+
+### Borrow Checker Errors
+
+When using `yield` in conditional branches, you may encounter borrow checker errors:
+
+```rust
+// ❌ Incorrect example
+if condition {
+    yield sleep(Duration::from_secs(1));  // Only one branch has yield
+}
+// Error when using parameters: borrow may still be in use when coroutine yields
+```
+
+**Solution**: Add `yield noop()` after conditional branches to unify all control flow paths:
+
+```rust
+// ✅ Correct example
+if condition {
+    yield sleep(Duration::from_secs(1));
+}
+yield noop();  // Ensures all paths have a yield point
+```
+
 ## 🔍 How It Works
 
 ### 📋 Overview
@@ -247,28 +369,6 @@ Run examples:
 ```bash
 cargo run --example simple
 cargo run --example minimal
-```
-
-### Borrow Checker Errors
-
-When using `yield` in conditional branches, you may encounter borrow checker errors:
-
-```rust
-// ❌ Incorrect example
-if condition {
-    yield sleep(Duration::from_secs(1));  // Only one branch has yield
-}
-// Error when using parameters: borrow may still be in use when coroutine yields
-```
-
-**Solution**: Add `yield noop()` after conditional branches to unify all control flow paths:
-
-```rust
-// ✅ Correct example
-if condition {
-    yield sleep(Duration::from_secs(1));
-}
-yield noop();  // Ensures all paths have a yield point
 ```
 
 ## ⚠️ Limitations

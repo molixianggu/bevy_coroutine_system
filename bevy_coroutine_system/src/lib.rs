@@ -228,11 +228,9 @@ pub fn next_frame() -> Pin<Box<dyn Future<Output = Box<dyn Any + Send>> + Send>>
     impl Future for NextFrameFuture {
         type Output = Box<dyn Any + Send>;
         
-        fn poll(mut self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
+        fn poll(mut self: Pin<&mut Self>, _cx: &mut std::task::Context<'_>) -> std::task::Poll<Self::Output> {
             if self.first_poll {
                 self.first_poll = false;
-                // 确保下一次会被唤醒
-                cx.waker().wake_by_ref();
                 std::task::Poll::Pending
             } else {
                 std::task::Poll::Ready(Box::new(()) as Box<dyn Any + Send>)

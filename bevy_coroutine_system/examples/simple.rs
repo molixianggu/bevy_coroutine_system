@@ -1,4 +1,7 @@
-//! 简化的协程系统示例
+//! Simple coroutine system example - Box sequence animation
+//! 
+//! This example demonstrates how to use the coroutine system to create a continuous animation sequence.
+//! Press the spacebar to trigger the animation, and the box will perform a series of actions.
 
 #![feature(coroutines, coroutine_trait)]
 
@@ -7,90 +10,133 @@ use bevy_coroutine_system::prelude::*;
 use std::time::Duration;
 
 fn main() {
-    // 创建一个简单的Bevy应用
     let mut app = App::new();
-
-    app.add_plugins((DefaultPlugins, CoroutinePlugin));
-
-    app.world_mut()
-        .spawn((Transform::from_xyz(0.0, 0.0, 0.0), Hp(100), Player));
-
-    // 注册协程
-    app.register_coroutine(simple_coroutine, simple_coroutine::id());
-
-    app.add_systems(Update, key_input);
-
+    
+    app.add_plugins((DefaultPlugins, CoroutinePlugin))
+        .add_systems(Startup, setup)
+        .add_systems(Update, trigger_animation);
+    
+    // Register the coroutine system
+    app.register_coroutine(box_animation, box_animation::id());
+    
     app.run();
 }
 
-fn key_input(mut commands: Commands, keyboard_input: Res<ButtonInput<KeyCode>>) {
-    if keyboard_input.just_pressed(KeyCode::Space) {
-        commands.run_system_cached(simple_coroutine);
+/// Set up the scene
+fn setup(mut commands: Commands) {
+    // Camera
+    commands.spawn(Camera2d);
+    
+    // Create a box
+    commands.spawn((
+        Sprite {
+            color: Color::WHITE,
+            custom_size: Some(Vec2::new(100.0, 100.0)),
+            ..default()
+        },
+        Transform::from_xyz(0.0, 0.0, 0.0),
+        AnimatedBox,
+    ));
+    
+    // Status text
+    commands.spawn((
+        Text2d::new("Press SPACE to start animation"),
+        TextFont {
+            font_size: 24.0,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 250.0, 0.0),
+        StatusText,
+    ));
+}
+
+/// Marker for the animated box
+#[derive(Component)]
+struct AnimatedBox;
+
+/// Marker for the status text
+#[derive(Component)]
+struct StatusText;
+
+/// Listen for spacebar to trigger animation
+fn trigger_animation(
+    mut commands: Commands,
+    keyboard: Res<ButtonInput<KeyCode>>,
+) {
+    if keyboard.just_pressed(KeyCode::Space) {
+        commands.run_system_cached(box_animation);
     }
 }
 
-#[derive(Component)]
-struct Hp(i32);
-
-#[derive(Component)]
-struct Player;
-
+/// Coroutine animation sequence
 #[coroutine_system]
-fn simple_coroutine(
-    mut commands: Commands,
-    mut query: Query<(&Transform, &mut Hp), With<Player>>,
-    time: Res<Time>,
+fn box_animation(
+    mut box_query: Query<&mut Transform, With<AnimatedBox>>,
+    mut text_query: Query<&mut Text2d, With<StatusText>>,
 ) {
-    info!("Coroutine started at {:?}!", time.elapsed());
-
-    // 查询并修改玩家血量
-    for (transform, mut hp) in query.iter_mut() {
-        info!("Player at {:?} has {} HP", transform.translation, hp.0);
-        hp.0 += 10;
-        info!("Healed player to {} HP", hp.0);
+    // Start animation
+    info!("Animation started!");
+    
+    // Update text prompt
+    for mut text in text_query.iter_mut() {
+        **text = "Scaling up...".to_string();
     }
-
-    // 创建一个实体
-    let entity = commands
-        .spawn((Transform::from_xyz(100.0, 0.0, 0.0), Hp(50)))
-        .id();
-    info!("Created entity: {:?}", entity);
-
-    // 暂停1秒
-    info!("Yielding for 1 second...");
-    let t: std::time::Instant = yield sleep(Duration::from_secs(1));
-
-    // 恢复后继续
-    info!("Coroutine resumed at {:?} ! {:?}", time.elapsed(), t);
-
-    // 再次查询并修改玩家血量
-    for (transform, mut hp) in query.iter_mut() {
-        info!("Player at {:?} now has {} HP", transform.translation, hp.0);
-        hp.0 -= 5;
-        info!("Damaged player to {} HP", hp.0);
+    
+    // Phase 1: Scale up
+    for _ in 0..30 {
+        yield next_frame();
+        for mut transform in box_query.iter_mut() {
+            transform.scale *= 1.02;
+        }
     }
-
-    yield next_frame();
-
-    // 再创建一个实体
-    let entity2 = commands
-        .spawn((Transform::from_xyz(-100.0, 0.0, 0.0), Hp(30)))
-        .id();
-    info!("Created another entity: {:?}", entity2);
-
-    info!("Coroutine completed!");
-}
-
-#[derive(Event)]
-struct AEvent;
-
-#[coroutine_system]
-fn simple_coroutine_2(
-    time: Res<Time>,
-    mut event_writer: EventWriter<AEvent>,
-    mut event_reader: EventReader<AEvent>,
-    mut query: Query<&Transform, With<Player>>,
-    mut commands: Commands,
-    a: Local<i32>,
-) {
+    
+    // Wait a moment
+    yield sleep(Duration::from_millis(300));
+    
+    // Update text
+    for mut text in text_query.iter_mut() {
+        **text = "Moving and rotating...".to_string();
+    }
+    
+    // Phase 2: Move and rotate
+    for _ in 0..60 {
+        yield next_frame();
+        for mut transform in box_query.iter_mut() {
+            transform.translation.x += 2.0;
+            transform.rotate_z(0.02);
+        }
+    }
+    
+    // Wait
+    yield sleep(Duration::from_millis(500));
+    
+    // Update text
+    for mut text in text_query.iter_mut() {
+        **text = "Returning...".to_string();
+    }
+    
+    // Phase 3: Return and scale down
+    for _ in 0..60 {
+        yield next_frame();
+        for mut transform in box_query.iter_mut() {
+            transform.translation.x -= 2.0;
+            transform.rotate_z(-0.02);
+        }
+    }
+    
+    // Finally restore size
+    for _ in 0..30 {
+        yield next_frame();
+        for mut transform in box_query.iter_mut() {
+            transform.scale /= 1.02;
+        }
+    }
+    yield noop();
+    
+    // Complete
+    for mut text in text_query.iter_mut() {
+        **text = "Animation complete! Press SPACE to restart".to_string();
+    }
+    
+    info!("Animation completed!");
 }

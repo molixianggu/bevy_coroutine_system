@@ -12,6 +12,8 @@ fn main() {
     app.add_plugins((MinimalPlugins, CoroutinePlugin));
 
     let id = app.register_coroutine(minimal_system, minimal_system::id());
+
+    println!("entities: {}", app.world().entities().len());
     
     // 手动运行几次更新以查看效果
     for i in 0..12 {
@@ -21,6 +23,8 @@ fn main() {
         
         std::thread::sleep(Duration::from_millis(200));
     }
+
+    println!("entities: {}", app.world().entities().len());
 
 }
 

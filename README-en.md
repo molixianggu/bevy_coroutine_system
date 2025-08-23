@@ -146,7 +146,7 @@ The output will be: `1, 2, 1, 2, 1, 2...` (with a 1-second interval between each
 
 ### Built-in Async Functions
 
-This library provides three built-in async functions to control coroutine execution flow:
+This library provides four built-in async functions to control coroutine execution flow:
 
 #### 1. `sleep(duration)` - Timed Delay
 
@@ -189,6 +189,22 @@ if condition {
 }
 yield noop(); // Ensures all control flow paths have a yield point
 ```
+
+#### 4. `spawn_blocking_task(closure)` - Execute Blocking Task
+
+Execute blocking code in a background thread to avoid blocking the main game thread. Can be used for file I/O, network requests, long computations, etc.:
+
+```rust
+let response: String = yield spawn_blocking_task(move || {
+    // It's safe to execute blocking operations here
+});
+```
+
+- The task runs in a separate thread, won't block the main game thread
+- The coroutine checks each frame if the thread has completed
+- Automatically resumes execution after the task completes
+
+⚠️ The return type here needs to be manually confirmed to match. It won't cause a compilation error, but will panic at runtime if incorrect!
 
 ### Getting Return Values from Async Operations
 
@@ -343,11 +359,13 @@ Check the `examples` directory for more examples:
 
 - 📝 `simple.rs` - Simple coroutine system example
 - 🌱 `minimal.rs` - Minimal coroutine system
+- 🌐 `http_example.rs` - HTTP request example, demonstrates how to use `spawn_blocking_task` to execute async HTTP requests
 
 Run examples:
 ```bash
 cargo run --example simple
 cargo run --example minimal
+cargo run --example http_example
 ```
 
 ## ⚠️ Limitations

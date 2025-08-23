@@ -146,7 +146,7 @@ fn repeating_coroutine() {
 
 ### 内置异步函数
 
-本库提供了三个内置的异步函数，用于控制协程的执行流程：
+本库提供了四个内置的异步函数，用于控制协程的执行流程：
 
 #### 1. `sleep(duration)` - 延时等待
 
@@ -189,6 +189,22 @@ if condition {
 }
 yield noop(); // 确保所有控制流路径都有 yield 点
 ```
+
+#### 4. `spawn_blocking_task(closure)` - 执行阻塞任务
+
+在后台线程中执行阻塞代码，避免阻塞游戏主线程。可以执行文件I/O、网络请求、长时间计算等操作：
+
+```rust
+let response: String = yield spawn_blocking_task(move || {
+    // 这里可以安全地执行阻塞操作
+});
+```
+
+- 任务在单独的线程中执行，不会阻塞游戏主线程
+- 协程会在每帧检查线程是否完成
+- 任务完成后自动恢复执行后续操作
+
+⚠️ 这里的返回值类型需要匹配手动确认匹配，编译不会报错，但运行时会panic!
 
 ### 获取异步操作的返回值
 
@@ -343,11 +359,13 @@ pub mod my_coroutine_system {
 
 - 📝 `simple.rs` - 简单的协程系统示例
 - 🌱 `minimal.rs` - 最小化的协程系统
+- 🌐 `http_example.rs` - HTTP请求示例，演示如何使用 `spawn_blocking_task` 执行异步HTTP请求
 
 运行示例：
 ```bash
 cargo run --example simple
 cargo run --example minimal
+cargo run --example http_example
 ```
 
 ## ⚠️ 限制

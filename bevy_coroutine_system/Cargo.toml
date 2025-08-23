@@ -15,4 +15,5 @@ bevy_coroutine_system_macro = { path = "../bevy_coroutine_system_macro" }
 
 [dev-dependencies]
 bevy = "0.16.1"
+ureq = "3.1.0"
 

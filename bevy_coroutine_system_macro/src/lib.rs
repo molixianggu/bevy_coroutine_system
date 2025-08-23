@@ -279,13 +279,26 @@ fn transform_function_body(
         #(let #param_names = &mut params.#param_names;)*
     };
     
-    // 遍历所有语句并处理 yield
+    // 首先添加初始的参数获取
+    let mut new_stmts = vec![quote! { #get_params }];
+    
+    // 转换所有语句
+    let transformed_stmts = transform_statements(&block.stmts, &get_params);
+    new_stmts.extend(transformed_stmts);
+    
+    quote! {
+        #(#new_stmts)*
+    }
+}
+
+/// 递归转换语句列表，处理所有的 yield 表达式
+fn transform_statements(
+    stmts: &[syn::Stmt],
+    get_params: &proc_macro2::TokenStream,
+) -> Vec<proc_macro2::TokenStream> {
     let mut new_stmts = Vec::new();
     
-    // 首先添加初始的参数获取
-    new_stmts.push(quote! { #get_params });
-    
-    for stmt in &block.stmts {
+    for stmt in stmts {
         match stmt {
             syn::Stmt::Local(local) => {
                 // 处理 let x = yield expr;
@@ -359,18 +372,137 @@ fn transform_function_body(
                             continue;
                         }
                     }
+                } else {
+                    // 递归处理表达式中的代码块
+                    let transformed_expr = transform_expression(expr, get_params);
+                    if semi.is_some() {
+                        new_stmts.push(quote! { #transformed_expr; });
+                    } else {
+                        new_stmts.push(quote! { #transformed_expr });
+                    }
+                    continue;
                 }
                 // 其他情况保持原样
                 new_stmts.push(quote! { #stmt });
             }
             _ => {
-                new_stmts.push(quote! { #stmt });
+                // 递归处理其他类型的语句
+                let transformed_stmt = transform_statement(stmt, get_params);
+                new_stmts.push(transformed_stmt);
             }
         }
     }
     
-    quote! {
-        #(#new_stmts)*
+    new_stmts
+}
+
+/// 转换单个语句
+fn transform_statement(
+    stmt: &syn::Stmt,
+    get_params: &proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
+    match stmt {
+        syn::Stmt::Expr(expr, semi) => {
+            let transformed_expr = transform_expression(expr, get_params);
+            if semi.is_some() {
+                quote! { #transformed_expr; }
+            } else {
+                quote! { #transformed_expr }
+            }
+        }
+        _ => quote! { #stmt },
+    }
+}
+
+/// 递归转换表达式，处理嵌套的代码块
+fn transform_expression(
+    expr: &syn::Expr,
+    get_params: &proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
+    match expr {
+        // 处理代码块
+        syn::Expr::Block(block_expr) => {
+            let transformed_stmts = transform_statements(&block_expr.block.stmts, get_params);
+            quote! {
+                {
+                    #(#transformed_stmts)*
+                }
+            }
+        }
+        // 处理 if 表达式
+        syn::Expr::If(if_expr) => {
+            let cond = &if_expr.cond;
+            let then_branch_stmts = transform_statements(&if_expr.then_branch.stmts, get_params);
+            
+            if let Some((_, else_branch)) = &if_expr.else_branch {
+                let else_transformed = transform_expression(else_branch, get_params);
+                quote! {
+                    if #cond {
+                        #(#then_branch_stmts)*
+                    } else #else_transformed
+                }
+            } else {
+                quote! {
+                    if #cond {
+                        #(#then_branch_stmts)*
+                    }
+                }
+            }
+        }
+        // 处理 while 循环
+        syn::Expr::While(while_expr) => {
+            let cond = &while_expr.cond;
+            let body_stmts = transform_statements(&while_expr.body.stmts, get_params);
+            quote! {
+                while #cond {
+                    #(#body_stmts)*
+                }
+            }
+        }
+        // 处理 loop 循环
+        syn::Expr::Loop(loop_expr) => {
+            let body_stmts = transform_statements(&loop_expr.body.stmts, get_params);
+            quote! {
+                loop {
+                    #(#body_stmts)*
+                }
+            }
+        }
+        // 处理 for 循环
+        syn::Expr::ForLoop(for_expr) => {
+            let pat = &for_expr.pat;
+            let iter = &for_expr.expr;
+            let body_stmts = transform_statements(&for_expr.body.stmts, get_params);
+            quote! {
+                for #pat in #iter {
+                    #(#body_stmts)*
+                }
+            }
+        }
+        // 处理 match 表达式
+        syn::Expr::Match(match_expr) => {
+            let matched = &match_expr.expr;
+            let mut arms = Vec::new();
+            
+            for arm in &match_expr.arms {
+                let pat = &arm.pat;
+                let guard = arm.guard.as_ref().map(|(_, guard)| quote! { if #guard });
+                let body = transform_expression(&arm.body, get_params);
+                let comma = if arm.comma.is_some() { quote! {,} } else { quote! {} };
+                
+                arms.push(quote! {
+                    #pat #guard => #body #comma
+                });
+            }
+            
+            quote! {
+                match #matched {
+                    #(#arms)*
+                }
+            }
+        }
+        // 其他表达式保持不变
+        _ => quote! { #expr },
     }
 }
 

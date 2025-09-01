@@ -18,9 +18,9 @@ struct Player;
 #[derive(Event, Clone)]
 struct AnEvent;
 
-/// 测试不同类型的输入
-/// 都可以被宏正确解析
-/// 保证修改过程中，功能没有被破坏
+/// Test different types of inputs
+//// All can be correctly parsed by the macro
+/// Ensure functionality isn't broken during modifications
 #[coroutine_system]
 fn simple_coroutine(
     time: Res<Time>,
@@ -30,4 +30,5 @@ fn simple_coroutine(
     query_2: Query<&H, With<Player>>,
     mut commands: Commands,
     a: Local<i32>,
-) {}
+) {
+}

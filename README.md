@@ -3,27 +3,27 @@
 [![Rust](https://img.shields.io/badge/rust-nightly-orange.svg)](https://www.rust-lang.org/)
 [![Bevy](https://img.shields.io/badge/bevy-0.16-blue.svg)](https://bevyengine.org/)
 
-[English](./README-en.md) | 中文
+English | [中文](./README-zh.md)
 
-一个为 Bevy 游戏引擎设计的协程系统，允许系统在多帧执行并支持暂停/恢复。
+A coroutine system designed for the Bevy game engine, allowing systems to execute across multiple frames with pause/resume support.
 
-> <s>实现丑陋，但是有用的东西</s>
+> <s>Ugly implementation, but useful stuff</s>
 
-## ✨ 特性
+## ✨ Features
 
-- 🎮 **多帧执行**: 系统可以跨多个游戏帧执行
-- ⏸️ **暂停/恢复**: 支持在任意点暂停执行并在后续帧恢复
-- 🔄 **异步操作**: 内置对异步操作的支持（如延时等待）
-- 🛠️ **简单易用**: 通过宏自动处理复杂的生命周期和状态管理
-- 🔓 **非独占访问**: 不需要独占 World，只借用需要的系统参数
-- 🔃 **实时数据更新**: 每次 yield 恢复后，自动获取最新的组件数据
-- 🎯 **非拷贝**: 直接遍历原始组件数据，无需额外的数据拷贝
+- 🎮 **Multi-frame Execution**: Systems can execute across multiple game frames
+- ⏸️ **Pause/Resume**: Support for pausing execution at any point and resuming in subsequent frames
+- 🔄 **Async Operations**: Built-in support for asynchronous operations (e.g., timed delays)
+- 🛠️ **Easy to Use**: Automatically handles complex lifecycle and state management through macros
+- 🔓 **Non-exclusive Access**: No need for exclusive World access, only borrows required system parameters
+- 🔃 **Real-time Data Updates**: Automatically fetches the latest component data after each yield resume
+- 🎯 **No-copy**: Directly iterates over raw component data without additional copying
 
-## 📦 安装
+## 📦 Installation
 
-⚠️ **注意**: 该库需要 Rust nightly 版本，因为使用了不稳定的协程特性。
+⚠️ **Note**: This library requires Rust nightly version due to the use of unstable coroutine features.
 
-### 1️⃣ 添加依赖
+### 1️⃣ Add Dependencies
 
 ```toml
 [dependencies]
@@ -31,23 +31,23 @@ bevy = "0.16"
 bevy_coroutine_system = "0.1.1"
 ```
 
-### 2️⃣ 设置 nightly 工具链
+### 2️⃣ Set up Nightly Toolchain
 
 ```bash
 rustup override set nightly
 ```
 
-### 3️⃣ 启用必需的 feature flags
+### 3️⃣ Enable Required Feature Flags
 
-在你的 crate 根文件（`main.rs` 或 `lib.rs`）的顶部添加：
+Add the following at the top of your crate root file (`main.rs` or `lib.rs`):
 
 ```rust
 #![feature(coroutines, coroutine_trait)]
 ```
 
-⚠️ **重要**：这些 feature flags 是必需的，因为宏生成的代码会使用 `yield` 语法和协程相关类型。如果不添加，编译会失败并提示缺少这些特性。
+⚠️ **Important**: These feature flags are required because the macro-generated code uses `yield` syntax and coroutine-related types. Without them, compilation will fail with missing feature errors.
 
-## 🎯 基础用法
+## 🎯 Basic Usage
 
 ```rust
 #![feature(coroutines, coroutine_trait)]
@@ -61,15 +61,15 @@ fn my_coroutine_system(
     mut commands: Commands,
     mut query: Query<&mut Transform>,
 ) {
-    // 第一帧执行
+    // Execute on first frame
     for mut transform in query.iter_mut() {
         transform.translation.x += 10.0;
     }
-    
-    // 暂停1秒（支持原生 yield 语法）
+
+    // Pause for 1 second (supports native yield syntax)
     yield sleep(Duration::from_secs(1));
-    
-    // 恢复后继续执行
+
+    // Continue execution after resume
     for mut transform in query.iter_mut() {
         transform.translation.y += 10.0;
     }
@@ -77,15 +77,15 @@ fn my_coroutine_system(
 
 fn main() {
     let mut app = App::new();
-    
+
     app.add_plugins((DefaultPlugins, CoroutinePlugin));
-    
-    // 注册协程系统
+
+    // Register the coroutine system
     app.register_coroutine(my_coroutine_system, my_coroutine_system::id());
-    
-    // 添加触发系统
+
+    // Add trigger system
     app.add_systems(Update, trigger_coroutine);
-    
+
     app.run();
 }
 
@@ -94,25 +94,25 @@ fn trigger_coroutine(
     keyboard: Res<ButtonInput<KeyCode>>,
 ) {
     if keyboard.just_pressed(KeyCode::Space) {
-        // 按空格键触发协程
+        // Trigger coroutine on spacebar press
         commands.run_system_cached(my_coroutine_system);
     }
 }
 ```
 
-### 协程系统的执行方式
+### Execution Methods for Coroutine Systems
 
-协程系统可以通过两种方式执行，它们的行为有区别：
+Coroutine systems can be executed in two ways, with behavioral differences:
 
-#### 方式1：注册并手动触发（一次性执行）
+#### Method 1: Register and Trigger Manually (One-time Execution)
 
-注册协程系统后，通过手动触发来执行。协程会自动连续运行直到完成：
+After registering a coroutine system, execute it through manual triggering. The coroutine will run continuously until completion:
 
 ```rust
-// 注册协程系统
+// Register the coroutine system
 app.register_coroutine(my_coroutine_system, my_coroutine_system::id());
 
-// 手动触发（例如响应按键）
+// Manual trigger (e.g., responding to keyboard input)
 fn trigger_system(mut commands: Commands, keyboard: Res<ButtonInput<KeyCode>>) {
     if keyboard.just_pressed(KeyCode::Space) {
         commands.run_system_cached(my_coroutine_system);
@@ -120,18 +120,18 @@ fn trigger_system(mut commands: Commands, keyboard: Res<ButtonInput<KeyCode>>) {
 }
 ```
 
-这种方式下，协程会执行一次完整的流程直到结束。
+In this mode, the coroutine executes once through its complete flow until it finishes.
 
-#### 方式2：作为常规系统（循环执行）
+#### Method 2: As a Regular System (Loop Execution)
 
-将协程系统添加为常规的 Bevy 系统，**无需**使用 `register_coroutine`：
+Add the coroutine system as a regular Bevy system, **without** using `register_coroutine`:
 
 ```rust
-// 直接添加为 Update 系统
+// Add directly as an Update system
 app.add_systems(Update, my_coroutine_system);
 ```
 
-这种方式下，协程会不断重复执行。例如：
+In this mode, the coroutine will execute repeatedly. For example:
 
 ```rust
 #[coroutine_system]
@@ -142,192 +142,192 @@ fn repeating_coroutine() {
 }
 ```
 
-输出将会是：`1, 2, 1, 2, 1, 2...`（每个循环间隔1秒）
+The output will be: `1, 2, 1, 2, 1, 2...` (with a 1-second interval between each loop)
 
-### 内置异步函数
+### Built-in Async Functions
 
-本库提供了四个内置的异步函数，用于控制协程的执行流程：
+This library provides four built-in async functions to control coroutine execution flow:
 
-#### 1. `sleep(duration)` - 延时等待
+#### 1. `sleep(duration)` - Timed Delay
 
-等待指定的时间后继续执行：
+Wait for a specified duration before continuing:
 
 ```rust
 use std::time::{Duration, Instant};
 
-// 等待1秒
+// Wait for 1 second
 let wake_time: Instant = yield sleep(Duration::from_secs(1));
-// wake_time 是唤醒时的时间戳
+// wake_time is the timestamp when awakened
 ```
 
-#### 2. `next_frame()` - 等待下一帧
+#### 2. `next_frame()` - Wait for Next Frame
 
-暂停执行直到下一帧：
+Pause execution until the next frame:
 
 ```rust
-// 等待一帧
+// Wait for one frame
 yield next_frame();
-// 返回值是 ()，通常不需要接收
+// Returns (), usually no need to capture the result
 ```
 
-#### 3. `noop()` - 空操作
+#### 3. `noop()` - No Operation
 
-立即返回，不执行任何操作。主要用于解决条件分支中的借用检查问题。
+Returns immediately without doing anything. Mainly used to solve borrow checker issues in conditional branches.
 
-当在条件分支中使用 `yield` 时，如果只有部分分支有 yield，可能会遇到 "borrow may still be in use when coroutine yields" 错误：
+When using `yield` in conditional branches where only some branches have yield, you may encounter "borrow may still be in use when coroutine yields" error:
 
 ```rust
-// ❌ 错误示例
+// ❌ Incorrect example
 if condition {
-    yield sleep(Duration::from_secs(1));  // 只有一个分支有 yield
+    yield sleep(Duration::from_secs(1));  // Only one branch has yield
 }
-// 使用参数时报错
+// Error when using parameters
 
-// ✅ 正确示例
+// ✅ Correct example
 if condition {
     yield sleep(Duration::from_secs(1));
 }
-yield noop(); // 确保所有控制流路径都有 yield 点
+yield noop(); // Ensures all control flow paths have a yield point
 ```
 
-#### 4. `spawn_blocking_task(closure)` - 执行阻塞任务
+#### 4. `spawn_blocking_task(closure)` - Execute Blocking Task
 
-在后台线程中执行阻塞代码，避免阻塞游戏主线程。可以执行文件I/O、网络请求、长时间计算等操作：
+Execute blocking code in a background thread to avoid blocking the main game thread. Can be used for file I/O, network requests, long computations, etc.:
 
 ```rust
 let response: String = yield spawn_blocking_task(move || {
-    // 这里可以安全地执行阻塞操作
+    // It's safe to execute blocking operations here
 });
 ```
 
-- 任务在单独的线程中执行，不会阻塞游戏主线程
-- 协程会在每帧检查线程是否完成
-- 任务完成后自动恢复执行后续操作
+- The task runs in a separate thread, won't block the main game thread
+- The coroutine checks each frame if the thread has completed
+- Automatically resumes execution after the task completes
 
-⚠️ 这里的返回值类型需要匹配手动确认匹配，编译不会报错，但运行时会panic!
+⚠️ The return type here needs to be manually confirmed to match. It won't cause a compilation error, but will panic at runtime if incorrect!
 
-### 获取异步操作的返回值
+### Getting Return Values from Async Operations
 
-你可以通过明确指定类型来获取 yield 表达式的返回值：
+You can get return values from yield expressions by explicitly specifying the type:
 
 ```rust
-// 明确指定返回类型
+// Explicitly specify return type
 let result: std::time::Instant = yield sleep(Duration::from_secs(1));
 ```
 
-⚠️ **警告**：如果指定的类型与实际返回类型不匹配，程序会 panic！请确保使用正确的类型（见上述各函数说明）。
+⚠️ **Warning**: If the specified type doesn't match the actual return type, the program will panic! Make sure to use the correct types (see the function descriptions above).
 
-## 🔍 工作原理
+## 🔍 How It Works
 
-### 📋 概述
+### 📋 Overview
 
-1. **🔮 过程宏转换**: `#[coroutine_system]` 宏将协程函数转换为常规的、可多次重复执行的 Bevy 系统函数
-2. **💾 状态管理**: 每个协程的状态由 `CoroutineTask` 结构管理
-3. **🔗 参数传递**: 使用裸指针机制绕过 Bevy 的生命周期限制
-4. **⚡ 异步集成**: Future 在每帧被轮询直到完成
+1. **🔮 Procedural Macro Transformation**: The `#[coroutine_system]` macro transforms coroutine functions into regular, repeatable Bevy system functions
+2. **💾 State Management**: Each coroutine's state is managed by the `CoroutineTask` structure
+3. **🔗 Parameter Passing**: Uses raw pointer mechanism to bypass Bevy's lifetime restrictions
+4. **⚡ Async Integration**: Futures are polled each frame until completion
 
-### 🔬 宏展开示例
+### 🔬 Macro Expansion Example
 
-当你编写这样的协程系统：
+When you write a coroutine system like this:
 
 ```rust
 #[coroutine_system]
 fn my_coroutine_system(
     mut query: Query<&mut Transform>,
 ) {
-    // 修改位置
+    // Modify position
     for mut transform in query.iter_mut() {
         transform.translation.x += 10.0;
     }
-    
-    // 暂停1秒
+
+    // Pause for 1 second
     yield sleep(Duration::from_secs(1));
-    
-    // 恢复后继续
+
+    // Continue after resume
     for mut transform in query.iter_mut() {
         transform.translation.y += 10.0;
     }
 }
 ```
 
-宏会将其展开为类似这样的伪代码：
+The macro expands it to something like this pseudocode:
 
 <details>
-<summary>🔽 点击查看展开后的代码</summary>
+<summary>🔽 Click to view expanded code</summary>
 
 ```rust
-// 自动生成的参数结构体
+// Auto-generated parameter struct
 #[derive(SystemParam)]
 struct MyCoroutineSystemParams<'w, 's> {
     query: Query<'w, 's, &mut Transform>,
 }
 
-// 实际的系统函数
+// Actual system function
 fn my_coroutine_system<'w, 's>(
     params: MyCoroutineSystemParams<'w, 's>,
     mut task: Local<CoroutineTask<CoroutineTaskInput<MyCoroutineSystemParams<'static, 'static>>>>,
     mut running_task: ResMut<RunningCoroutines>,
 ) {
-    // 首次运行时创建协程
+    // Create coroutine on first run
     if task.coroutine.is_none() {
         task.coroutine = Some(Box::pin(
             #[coroutine]
             move |mut input: CoroutineTaskInput<MyCoroutineSystemParams<'static, 'static>>| {
-                // 获取参数的裸指针
+                // Get raw pointer to parameters
                 let params = input.data_mut();
                 let query = &mut params.query;
-                
-                // 原始函数体的第一部分
+
+                // First part of original function body
                 for mut transform in query.iter_mut() {
                     transform.translation.x += 10.0;
                 }
-                
-                // yield 表达式被转换为协程的 yield
+
+                // yield expression is converted to coroutine yield
                 input = yield sleep(Duration::from_secs(1));
-                
-                // yield 后重新获取参数（重要！）
+
+                // Re-fetch parameters after yield (important!)
                 let params = input.data_mut();
                 let query = &mut params.query;
-                
-                // 原始函数体的剩余部分
+
+                // Remaining part of original function body
                 for mut transform in query.iter_mut() {
                     transform.translation.y += 10.0;
                 }
             }
         ));
-        
-        // 标记系统为运行中
+
+        // Mark system as running
         running_task.systems.insert(my_coroutine_system::id(), ());
     }
-    
-    // 处理异步操作（如sleep）
+
+    // Handle async operations (like sleep)
     let mut async_result = None;
     if let Some(fut) = &mut task.fut {
-        // 轮询Future
+        // Poll the Future
         match fut.as_mut().poll(&mut Context::from_waker(&Waker::noop())) {
             Poll::Ready(v) => {
                 async_result = Some(v);
                 task.fut = None;
             }
-            Poll::Pending => return, // Future未完成，下帧继续
+            Poll::Pending => return, // Future not ready, continue next frame
         }
     }
-    
-    // 创建协程输入，包含参数指针和异步结果
+
+    // Create coroutine input with parameter pointer and async result
     let input = CoroutineTaskInput {
         data_ptr: Some(unsafe { NonNull::new_unchecked(&params as *const _ as *mut _) }),
         async_result,
     };
-    
-    // 恢复协程执行
+
+    // Resume coroutine execution
     if let Some(coroutine) = &mut task.coroutine {
         match coroutine.as_mut().resume(input) {
             CoroutineState::Yielded(future) => {
-                // 协程yield了一个Future，保存起来下帧继续
+                // Coroutine yielded a Future, save it for next frame
                 task.fut = Some(future);
             }
             CoroutineState::Complete(()) => {
-                // 协程执行完毕，清理状态
+                // Coroutine completed, clean up state
                 task.coroutine = None;
                 running_task.systems.remove(my_coroutine_system::id());
                 return;
@@ -336,7 +336,7 @@ fn my_coroutine_system<'w, 's>(
     }
 }
 
-// 生成的模块，提供唯一ID
+// Generated module providing unique ID
 pub mod my_coroutine_system {
     pub fn id() -> &'static str {
         concat!(module_path!(), "::my_coroutine_system")
@@ -346,38 +346,38 @@ pub mod my_coroutine_system {
 
 </details>
 
-### 🔑 关键机制
+### 🔑 Key Mechanisms
 
-1. **🔐 生命周期处理**: 使用裸指针(`NonNull`)传递参数，绕过 Rust 的生命周期检查
-2. **📦 协程状态**: 通过 `Local<CoroutineTask>` 保存协程状态，实现跨帧持久化
-3. **⚡ 异步支持**: yield 的 Future 在每帧被轮询，直到完成
-4. **🔄 自动注册**: `RunningCoroutines` 资源跟踪所有活跃的协程，确保它们每帧执行
+1. **🔐 Lifetime Handling**: Uses raw pointers (`NonNull`) to pass parameters, bypassing Rust's lifetime checks
+2. **📦 Coroutine State**: Saves coroutine state via `Local<CoroutineTask>` for cross-frame persistence
+3. **⚡ Async Support**: Yielded Futures are polled each frame until completion
+4. **🔄 Auto Registration**: `RunningCoroutines` resource tracks all active coroutines, ensuring they execute each frame
 
-## 📚 示例
+## 📚 Examples
 
-查看 `examples` 目录获取更多示例：
+Check the `examples` directory for more examples:
 
-- 📝 `simple.rs` - 简单的协程系统示例
-- 🌱 `minimal.rs` - 最小化的协程系统
-- 🌐 `http_example.rs` - HTTP请求示例，演示如何使用 `spawn_blocking_task` 执行异步HTTP请求
+- 📝 `simple.rs` - Simple coroutine system example
+- 🌱 `minimal.rs` - Minimal coroutine system
+- 🌐 `http_example.rs` - HTTP request example, demonstrates how to use `spawn_blocking_task` to execute async HTTP requests
 
-运行示例：
+Run examples:
 ```bash
 cargo run --example simple
 cargo run --example minimal
 cargo run --example http_example
 ```
 
-## ⚠️ 限制
+## ⚠️ Limitations
 
-- 🔧 需要 Rust nightly 版本
-- 🚧 协程特性仍处于实验阶段
-- 💡 使用不安全的裸指针传递参数
-- 📊 宏覆盖范围有限，有些参数可能没有及时支持
+- 🔧 Requires Rust nightly version
+- 🚧 Coroutine features are still experimental
+- 💡 Uses unsafe raw pointers for parameter passing
+- 📊 Limited macro coverage, some parameters might not be supported yet
 
-## 🤝 贡献
+## 🤝 Contributing
 
-欢迎贡献！请随时提交 Issue 或 Pull Request。
+Contributions are welcome! Feel free to submit Issues or Pull Requests.
 
 ## 📄 License
 

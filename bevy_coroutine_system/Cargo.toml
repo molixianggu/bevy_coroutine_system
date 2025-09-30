@@ -10,10 +10,9 @@ keywords = ["bevy", "coroutine", "game", "async", "yield"]
 categories = ["game-development", "asynchronous"]
 
 [dependencies]
-bevy = "0.16.1"
-bevy_coroutine_system_macro = { path = "../bevy_coroutine_system_macro", version = "0.1.0" }
+bevy_ecs = "0.17.0-rc.2"
 
 [dev-dependencies]
-bevy = "0.16.1"
+bevy = "0.17.0-rc.2"
 ureq = "3.1.0"
 

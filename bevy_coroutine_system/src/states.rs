@@ -15,25 +15,31 @@ impl<T: 'static> States<T> {
             world: data,
         }
     }
-    pub fn with<Marker, F>(mut self, fun: F)
+    pub fn with<Marker, F, R>(mut self, fun: F) -> Result<R>
     where
-        F: IntoSystem<In<T>, (), Marker>,
+        F: IntoSystem<In<T>, Result<R>, Marker>,
     {
         let world = unsafe { &mut *(self.world as *mut World) };
 
-        
         let result = self.result.take().expect("result is not set");
 
         // Convert the closure into a system using Bevy's built-in trait.
-        let mut system = <F as IntoSystem<In<T>, (), Marker>>::into_system(fun);
+        let mut system = <F as IntoSystem<In<T>, Result<R>, Marker>>::into_system(fun);
 
         // Initialize the system.
         system.initialize(world);
 
         // Run the system with the input.
-        system.run(result, world).expect("error: run system");
+        let Ok(r) = system.run(result, world) else {
+            return Err(BevyError::from("error: run system"));
+        };
 
         // Apply any deferred commands.
         system.apply_deferred(world);
+
+        match r {
+            Ok(r) => Ok(r),
+            Err(e) => Err(e),
+        }
     }
 }

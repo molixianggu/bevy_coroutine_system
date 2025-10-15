@@ -58,13 +58,13 @@ struct ResponseText;
 
 /// Coroutine that performs async HTTP requests in a loop
 
-async fn http_request_coroutine() {
+async fn http_request_coroutine() -> Result<()> {
     noop().await.with(
         |_: In<()>, mut text: Query<&mut Text2d, With<StatusText>>| -> Result<()> {
             text.single_mut()?.0 = "Sending HTTP request...".to_string();
             Ok(())
         },
-    );
+    ).unwrap();
 
     // Clear previous response
     noop().await.with(
@@ -72,7 +72,7 @@ async fn http_request_coroutine() {
             text.single_mut()?.0 = "".to_string();
             Ok(())
         },
-    );
+    ).unwrap();
 
     // Make the async HTTP request
     info!("Starting HTTP request...");
@@ -98,7 +98,7 @@ async fn http_request_coroutine() {
                 }
             }
         },
-    );
+    ).unwrap();
 
     for i in 0..10 {
         sleep(Duration::from_secs(1)).await.with(
@@ -106,8 +106,10 @@ async fn http_request_coroutine() {
                 text.single_mut()?.0 = format!("Next request in {} seconds...", 10 - i).to_string();
                 Ok(())
             },
-        );
+        ).unwrap();
     }
 
     info!("Request cycle completed, restarting...");
+
+    Ok(())
 }

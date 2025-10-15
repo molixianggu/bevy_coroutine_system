@@ -16,12 +16,12 @@ impl<Fut> Default for AsyncTask<Fut> {
     }
 }
 
-pub fn async_system<F, Fut>(async_fn: F) -> impl FnMut(&mut World, Local<AsyncTask<Fut>>)
+pub fn async_system<F, Fut>(async_fn: F) -> impl FnMut(&mut World, Local<AsyncTask<Fut>>) -> Result<()>
 where
     F: Fn() -> Fut + Clone + 'static,
-    Fut: Future<Output = ()> + Send + 'static,
+    Fut: Future<Output = Result<()>> + Send + 'static,
 {
-    move |world: &mut World, mut task: Local<AsyncTask<Fut>>| {
+    move |world: &mut World, mut task: Local<AsyncTask<Fut>>| -> Result<()> {
         if task.future.is_none() {
             task.future = Some(Box::pin(async_fn()));
         }
@@ -35,11 +35,14 @@ where
 
             match future.as_mut().poll(&mut context) {
                 Poll::Pending => {}
-                Poll::Ready(_) => {
+                Poll::Ready(r) => {
                     task.future = None;
+                    r?;
                 }
             }
         }
+
+        Ok(())
     }
 }
 

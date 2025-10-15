@@ -57,7 +57,7 @@ struct StatusText;
 
 /// Coroutine animation sequence that runs in a loop
 
-async fn box_animation() {
+async fn box_animation() -> Result<()> {
     // Start animation
     info!("Animation started!");
 
@@ -67,7 +67,7 @@ async fn box_animation() {
             text.single_mut()?.0 = "Scaling up...".to_string();
             Ok(())
         },
-    );
+    ).unwrap();
 
     // Phase 1: Scale up
     for _ in 0..30 {
@@ -78,7 +78,7 @@ async fn box_animation() {
                 }
                 Ok(())
             },
-        );
+        ).unwrap();
     }
 
     // Wait a moment
@@ -90,7 +90,7 @@ async fn box_animation() {
             text.single_mut()?.0 = "Moving and rotating...".to_string();
             Ok(())
         },
-    );
+    ).unwrap();
 
     // Phase 2: Move and rotate
     for _ in 0..60 {
@@ -102,7 +102,7 @@ async fn box_animation() {
                 }
                 Ok(())
             },
-        );
+        ).unwrap();
     }
 
     // Wait
@@ -114,7 +114,7 @@ async fn box_animation() {
             text.single_mut()?.0 = "Returning...".to_string();
             Ok(())
         },
-    );
+    ).unwrap();
 
     // Phase 3: Return and scale down
     for _ in 0..60 {
@@ -126,7 +126,7 @@ async fn box_animation() {
                 }
                 Ok(())
             },
-        );
+        ).unwrap();
     }
 
     // Finally restore size
@@ -138,7 +138,7 @@ async fn box_animation() {
                 }
                 Ok(())
             },
-        );
+        ).unwrap();
     }
 
     // Complete
@@ -147,7 +147,9 @@ async fn box_animation() {
             text.single_mut()?.0 = "Animation complete! Restarting...".to_string();
             Ok(())
         },
-    );
+    ).unwrap();
 
     info!("Animation cycle completed, restarting...");
+
+    Ok(())
 }

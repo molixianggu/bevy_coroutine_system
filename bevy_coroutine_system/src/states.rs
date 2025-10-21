@@ -32,7 +32,11 @@ impl<T: 'static> States<T> {
         // Run the system with the input.
         let r = match system.run(result, world) {
             Ok(r) => r,
-            Err(e) => return Err(e),
+            Err(e) => {
+                return {
+                    return Err(format!("error: run system: {:?}", e).into());
+                };
+            }
         };
 
         // Apply any deferred commands.

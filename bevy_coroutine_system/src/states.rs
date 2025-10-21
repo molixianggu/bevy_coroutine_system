@@ -30,8 +30,9 @@ impl<T: 'static> States<T> {
         system.initialize(world);
 
         // Run the system with the input.
-        let Ok(r) = system.run(result, world) else {
-            return Err(BevyError::from(format!("error: run system: {:?}", e)));
+        let r = match system.run(result, world) {
+            Ok(r) => r,
+            Err(e) => return Err(e),
         };
 
         // Apply any deferred commands.

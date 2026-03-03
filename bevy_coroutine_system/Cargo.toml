@@ -10,9 +10,9 @@ keywords = ["bevy", "coroutine", "game", "async", "yield"]
 categories = ["game-development", "asynchronous"]
 
 [dependencies]
-bevy_ecs = "0.17.2"
+bevy_ecs = "0.18"
 
 [dev-dependencies]
-bevy = "0.17.2"
+bevy = "0.18"
 ureq = "3.1.0"
 

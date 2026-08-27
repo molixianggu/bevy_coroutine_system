@@ -3,8 +3,6 @@
 //! This example demonstrates how to use the coroutine system to create a continuous animation sequence.
 //! The box will automatically perform a series of actions in a continuous loop.
 
-#![feature(coroutines, coroutine_trait)]
-
 use bevy::prelude::*;
 use bevy_coroutine_system::prelude::*;
 use std::time::Duration;
@@ -39,7 +37,7 @@ fn setup(mut commands: Commands) {
     commands.spawn((
         Text2d::new("Animation running..."),
         TextFont {
-            font_size: 24.0,
+            font_size: FontSize::Px(24.0),
             ..default()
         },
         Transform::from_xyz(0.0, 250.0, 0.0),

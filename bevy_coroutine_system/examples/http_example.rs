@@ -3,8 +3,6 @@
 //! This example shows how to make async HTTP requests within the coroutine system.
 //! The coroutine automatically runs in a loop, fetching data from a test API and displaying the results.
 
-#![feature(coroutines, coroutine_trait)]
-
 use std::time::{Duration, Instant};
 
 use bevy::prelude::*;
@@ -29,7 +27,7 @@ fn setup(mut commands: Commands) {
     commands.spawn((
         Text2d::new("Waiting to start..."),
         TextFont {
-            font_size: 24.0,
+            font_size: FontSize::Px(24.0),
             ..default()
         },
         Transform::from_xyz(0.0, 300.0, 0.0),
@@ -40,7 +38,7 @@ fn setup(mut commands: Commands) {
     commands.spawn((
         Text2d::new(""),
         TextFont {
-            font_size: 20.0,
+            font_size: FontSize::Px(20.0),
             ..default()
         },
         Transform::from_xyz(0.0, -50.0, 0.0),

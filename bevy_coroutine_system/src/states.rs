@@ -33,9 +33,7 @@ impl<T: 'static> States<T> {
         let r = match system.run(result, world) {
             Ok(r) => r,
             Err(e) => {
-                return {
-                    return Err(format!("error: run system: {:?}", e).into());
-                };
+                return Err(format!("error: run system: {:?}", e).into());
             }
         };
 

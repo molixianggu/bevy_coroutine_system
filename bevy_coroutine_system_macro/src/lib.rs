@@ -490,7 +490,6 @@ fn transform_expression(
 
             for arm in &match_expr.arms {
                 let pat = &arm.pat;
-                let guard = arm.guard.as_ref().map(|(_, guard)| quote! { if #guard });
                 let body = transform_expression(&arm.body, get_params);
                 let comma = if arm.comma.is_some() {
                     quote! {,}
@@ -499,7 +498,7 @@ fn transform_expression(
                 };
 
                 arms.push(quote! {
-                    #pat #guard => #body #comma
+                    #pat => #body #comma
                 });
             }
 
@@ -588,11 +587,11 @@ fn analyze_lifetime_requirements(ty: &syn::Type) -> LifetimeRequirement {
                         needs_w: false,
                         needs_s: true,
                     }),
-                    "EventWriter" => req.merge(LifetimeRequirement {
+                    "EventWriter" | "MessageWriter" => req.merge(LifetimeRequirement {
                         needs_w: true,
                         needs_s: false,
                     }),
-                    "EventReader" => req.merge(LifetimeRequirement {
+                    "EventReader" | "MessageReader" => req.merge(LifetimeRequirement {
                         needs_w: true,
                         needs_s: true,
                     }),
@@ -631,6 +630,7 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                 .unwrap_or_else(|| parse_quote! { 'static });
 
             Type::Reference(syn::TypeReference {
+                attrs: type_ref.attrs.clone(),
                 and_token: type_ref.and_token,
                 lifetime: Some(lifetime),
                 mutability: type_ref.mutability,
@@ -647,6 +647,7 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                 .collect();
 
             Type::Tuple(syn::TypeTuple {
+                attrs: type_tuple.attrs.clone(),
                 paren_token: type_tuple.paren_token,
                 elems,
             })
@@ -664,8 +665,8 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                 let needs_lifetimes = match ident_str.as_str() {
                     "Commands" | "Query" => true,
                     "Local" => true,
-                    "Res" | "ResMut" | "EventWriter" => true,
-                    "EventReader" => true,
+                    "Res" | "ResMut" | "EventWriter" | "MessageWriter" => true,
+                    "EventReader" | "MessageReader" => true,
                     _ => false,
                 };
 
@@ -676,8 +677,9 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                             if ident_str == "Res"
                                 || ident_str == "ResMut"
                                 || ident_str == "EventWriter"
+                                || ident_str == "MessageWriter"
                             {
-                                // Res, ResMut and EventWriter need only one lifetime 'w
+                                // Res, ResMut and EventWriter/MessageWriter need only one lifetime 'w
                                 segment.arguments =
                                     PathArguments::AngleBracketed(parse_quote! { <'w> });
                             } else if ident_str == "Local" {
@@ -685,7 +687,7 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                                 segment.arguments =
                                     PathArguments::AngleBracketed(parse_quote! { <'s> });
                             } else {
-                                // Commands, Query, EventReader need two lifetimes
+                                // Commands, Query, EventReader/MessageReader need two lifetimes
                                 segment.arguments =
                                     PathArguments::AngleBracketed(parse_quote! { <'w, 's> });
                             }
@@ -714,6 +716,7 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                             if ident_str == "Res"
                                 || ident_str == "ResMut"
                                 || ident_str == "EventWriter"
+                                || ident_str == "MessageWriter"
                             {
                                 final_args.push(parse_quote! { 'w });
                             } else if ident_str == "Local" {
@@ -721,6 +724,7 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
                             } else if ident_str == "Query"
                                 || ident_str == "Commands"
                                 || ident_str == "EventReader"
+                                || ident_str == "MessageReader"
                             {
                                 final_args.push(parse_quote! { 'w });
                                 final_args.push(parse_quote! { 's });
@@ -745,6 +749,7 @@ fn add_lifetimes_to_type(ty: &syn::Type) -> syn::Type {
             }
 
             Type::Path(TypePath {
+                attrs: type_path.attrs.clone(),
                 qself: type_path.qself.clone(),
                 path,
             })

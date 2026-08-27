@@ -30,7 +30,7 @@ fn setup(mut commands: Commands) {
     commands.spawn((
         Text2d::new("Press SPACE to send HTTP request"),
         TextFont {
-            font_size: 24.0,
+            font_size: FontSize::Px(24.0),
             ..default()
         },
         Transform::from_xyz(0.0, 300.0, 0.0),
@@ -41,7 +41,7 @@ fn setup(mut commands: Commands) {
     commands.spawn((
         Text2d::new(""),
         TextFont {
-            font_size: 20.0,
+            font_size: FontSize::Px(20.0),
             ..default()
         },
         Transform::from_xyz(0.0, -50.0, 0.0),

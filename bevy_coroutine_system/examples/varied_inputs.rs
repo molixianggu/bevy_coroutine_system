@@ -15,7 +15,7 @@ struct H(());
 #[derive(Component)]
 struct Player;
 
-#[derive(Event, Clone)]
+#[derive(Message, Clone)]
 struct AnEvent;
 
 /// Test different types of inputs
@@ -24,8 +24,8 @@ struct AnEvent;
 #[coroutine_system]
 fn simple_coroutine(
     time: Res<Time>,
-    mut event_writer: EventWriter<AnEvent>,
-    mut event_reader: EventReader<AnEvent>,
+    mut event_writer: MessageWriter<AnEvent>,
+    mut event_reader: MessageReader<AnEvent>,
     query: Query<&Transform, With<Player>>,
     query_2: Query<&H, With<Player>>,
     mut commands: Commands,

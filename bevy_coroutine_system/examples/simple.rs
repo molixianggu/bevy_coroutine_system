@@ -1,5 +1,5 @@
 //! Simple coroutine system example - Box sequence animation
-//! 
+//!
 //! This example demonstrates how to use the coroutine system to create a continuous animation sequence.
 //! Press the spacebar to trigger the animation, and the box will perform a series of actions.
 
@@ -11,14 +11,14 @@ use std::time::Duration;
 
 fn main() {
     let mut app = App::new();
-    
+
     app.add_plugins((DefaultPlugins, CoroutinePlugin))
         .add_systems(Startup, setup)
         .add_systems(Update, trigger_animation);
-    
+
     // Register the coroutine system
     app.register_coroutine(box_animation, box_animation::id());
-    
+
     app.run();
 }
 
@@ -26,7 +26,7 @@ fn main() {
 fn setup(mut commands: Commands) {
     // Camera
     commands.spawn(Camera2d);
-    
+
     // Create a box
     commands.spawn((
         Sprite {
@@ -37,12 +37,12 @@ fn setup(mut commands: Commands) {
         Transform::from_xyz(0.0, 0.0, 0.0),
         AnimatedBox,
     ));
-    
+
     // Status text
     commands.spawn((
         Text2d::new("Press SPACE to start animation"),
         TextFont {
-            font_size: 24.0,
+            font_size: FontSize::Px(24.0),
             ..default()
         },
         Transform::from_xyz(0.0, 250.0, 0.0),
@@ -59,10 +59,7 @@ struct AnimatedBox;
 struct StatusText;
 
 /// Listen for spacebar to trigger animation
-fn trigger_animation(
-    mut commands: Commands,
-    keyboard: Res<ButtonInput<KeyCode>>,
-) {
+fn trigger_animation(mut commands: Commands, keyboard: Res<ButtonInput<KeyCode>>) {
     if keyboard.just_pressed(KeyCode::Space) {
         commands.run_system_cached(box_animation);
     }
@@ -76,12 +73,12 @@ fn box_animation(
 ) {
     // Start animation
     info!("Animation started!");
-    
+
     // Update text prompt
     for mut text in text_query.iter_mut() {
         **text = "Scaling up...".to_string();
     }
-    
+
     // Phase 1: Scale up
     for _ in 0..30 {
         yield next_frame();
@@ -89,15 +86,15 @@ fn box_animation(
             transform.scale *= 1.02;
         }
     }
-    
+
     // Wait a moment
     yield sleep(Duration::from_millis(300));
-    
+
     // Update text
     for mut text in text_query.iter_mut() {
         **text = "Moving and rotating...".to_string();
     }
-    
+
     // Phase 2: Move and rotate
     for _ in 0..60 {
         yield next_frame();
@@ -106,15 +103,15 @@ fn box_animation(
             transform.rotate_z(0.02);
         }
     }
-    
+
     // Wait
     yield sleep(Duration::from_millis(500));
-    
+
     // Update text
     for mut text in text_query.iter_mut() {
         **text = "Returning...".to_string();
     }
-    
+
     // Phase 3: Return and scale down
     for _ in 0..60 {
         yield next_frame();
@@ -123,7 +120,7 @@ fn box_animation(
             transform.rotate_z(-0.02);
         }
     }
-    
+
     // Finally restore size
     for _ in 0..30 {
         yield next_frame();
@@ -132,11 +129,11 @@ fn box_animation(
         }
     }
     yield noop();
-    
+
     // Complete
     for mut text in text_query.iter_mut() {
         **text = "Animation complete! Press SPACE to restart".to_string();
     }
-    
+
     info!("Animation completed!");
 }

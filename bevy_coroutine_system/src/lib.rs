@@ -386,23 +386,22 @@ macro_rules! yield_async {
 /// ```
 pub mod prelude {
     pub use crate::{
-        // Trait
-        CoroutineSystem,
-
-        // Macro (re-exported from bevy_coroutine_system_macro)
-        coroutine_system,
         // Plugin
         CoroutinePlugin,
 
-        // Functions
-        sleep,
-        next_frame,
-        noop,
-        spawn_blocking_task,
-        
+        // Trait
+        CoroutineSystem,
+
         // Types
         CoroutineTask,
         CoroutineTaskInput,
         RunningCoroutines,
+        // Macro (re-exported from bevy_coroutine_system_macro)
+        coroutine_system,
+        next_frame,
+        noop,
+        // Functions
+        sleep,
+        spawn_blocking_task,
     };
 }
